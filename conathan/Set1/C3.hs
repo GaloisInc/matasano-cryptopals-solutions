@@ -8,8 +8,8 @@ rawToAscii :: Raw -> String
 rawToAscii = map (chr . fromIntegral)
 
 -- Return ranked encryptions, sorted decreasing by score.
-findNeedle :: Base16 -> [(Int, Word8, String)]
-findNeedle base16 = reverse . sort $
+rankSingleCharXors :: Base16 -> [(Int, Word8, String)]
+rankSingleCharXors base16 = reverse . sort $
   [ (score, key, ascii)
   | key <- [0..255]
   , plainText <- [zipWith xor raw (repeat key)]
@@ -48,7 +48,7 @@ cOOKINGmcSLIKEAPOUNDOFBACON
 -}
 main :: IO ()
 main = do
-  forM_ (take 5 $ findNeedle base16) $ \(score, key, ascii) -> do
+  forM_ (take 5 $ rankSingleCharXors base16) $ \(score, key, ascii) -> do
     printf "Score = %i, key = %i, plaintext =\n%s\n\n"
       score key ascii
   where
