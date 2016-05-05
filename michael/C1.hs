@@ -1,4 +1,4 @@
-module Bytes where
+module C1 where
 
 import Data.Array
 import Data.Char
