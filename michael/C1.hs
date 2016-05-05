@@ -1,8 +1,11 @@
-module C1 where
+module Bytes where
 
 import Data.Array
 import Data.Char
 import Data.Maybe (fromJust)
+import Data.Word (Word8)
+
+type Byte = Word8
 
 test1 :: (String, String)
 test1 = ( "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
@@ -41,38 +44,55 @@ base64CharToInt = array (min_char,max_char) (zip base64Alphabet [0..])
   min_char = minimum base64Alphabet
   max_char = maximum base64Alphabet
 
-encodeHex :: Int -> (Char,Char,Char)
-encodeHex i = (a,b,c)
+factorize :: Integral a => a -> a -> [a]
+factorize base = reverse . go
   where
-    (prod,c_i) = i `divMod` 16
-    (a_i,b_i) = prod `divMod` 16
-    [a,b,c] = map (hexIntToChar !) [a_i,b_i,c_i]
+  go total = if total == 0
+                then []
+                else let (total',modded) = total `divMod` base
+                      in modded:(go total')
 
-decodeHex :: (Char,Char,Char) -> Int
-decodeHex (a,b,c) = 256*a_i + 16*b_i + c_i
+unfactorize :: Num a => a -> [a] -> a
+unfactorize base = sum . zipWith (*) bases . reverse
   where
-  [a_i,b_i,c_i] = map (hexCharToInt !) [a,b,c]
+  bases = map (base^) [0..]
 
-encodeBase64 :: Int -> (Char,Char)
-encodeBase64 i = (d,e)
+
+encodeHex :: [Byte] -> [Char]
+encodeHex = concatMap encodeHex'
   where
-  (d_i,e_i) = i `divMod` 64
-  [d,e] = map (base64IntToChar !) [d_i,e_i]
+  encodeHex' :: Byte -> [Char]
+  encodeHex' i = map (hexIntToChar !) (factorize (2^4) (fromIntegral i))
 
-decodeBase64 :: (Char,Char) -> Int
-decodeBase64 (d,e) = 64*d_i + e_i
+decodeHex :: [Char] -> [Byte]
+decodeHex (a:b:rest) = byte : decodeHex rest
   where
-  [d_i,e_i] = map (base64CharToInt !) [d,e]
+  byte = fromIntegral $ unfactorize (2^4) (map (hexCharToInt !) [a,b])
+decodeHex [] = []
+decodeHex _ = error "Non even number of hex chars"
 
-conv :: (Char,Char,Char) -> (Char,Char)
-conv = encodeBase64 . decodeHex
+encodeBase64 :: [Byte] -> [Char]
+encodeBase64 (a:b:c:rest) = encodeBase64' (a,b,c)
+                         ++ encodeBase64 rest
+  where
+  encodeBase64' :: (Byte,Byte,Byte) -> [Char]
+  encodeBase64' (a,b,c) = map (base64IntToChar !) (factorize (2^6) i)
+    where
+    i = unfactorize (2^8) (map fromIntegral [a,b,c])
+encodeBase64 [] = []
+encodeBase64 _ = error "Non multiple-of-3-length of bytes"
 
+decodeBase64 :: [Char] -> [Byte]
+decodeBase64 (a:b:c:d:rest) = decodeBase64' (a,b,c,d)
+                           ++ decodeBase64 rest
+  where
+  decodeBase64' :: (Char,Char,Char,Char) -> [Byte]
+  decodeBase64' (a,b,c,d) = map fromIntegral (factorize (2^8) i)
+    where
+    i = unfactorize (2^6) (map (base64CharToInt !) [a,b,c,d])
+decodeBase64 [] = []
+decodeBase64 _ = error "Non multiple-of-4-length of base64 chars"
 
 
 convert :: [Char] -> [Char]
-convert (a:b:c:rest) = d:e:(convert rest)
-  where
-  (d,e) = conv (a,b,c)
-convert [] = []
-convert _ = error "Number of characters is not a multiple of 3"
-
+convert = encodeBase64 . decodeHex
