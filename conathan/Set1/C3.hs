@@ -4,16 +4,13 @@ import Common
 import Set1.C1 hiding ( main )
 import Set1.C2 hiding ( main )
 
-rawToAscii :: Raw -> String
-rawToAscii = map (chr . fromIntegral)
-
 -- Return ranked encryptions, sorted decreasing by score.
 rankSingleCharXors :: Base16 -> [(Int, Word8, String)]
 rankSingleCharXors base16 = reverse . sort $
   [ (score, key, ascii)
   | key <- [0..255]
   , plainText <- [zipWith xor raw (repeat key)]
-  , ascii <- [rawToAscii plainText]
+  , ascii <- [rawToChar plainText]
   , score <- [rank ascii]
   ]
   where
