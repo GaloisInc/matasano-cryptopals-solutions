@@ -1,14 +1,6 @@
-module C1 where
+module Set1.C1 where
 
--- import qualified Data.ByteString as BS
-import           Control.Monad ( forM_ )
-import           Data.Bits
-import qualified Data.Map as M
-import           Data.Map ( Map )
-import           Data.Word ( Word8, Word32 )
-import           Text.Printf ( printf )
-
-type Raw = [Word8]
+import Common
 
 -- Using the non-URL safe encoding from the RFC.
 --
@@ -30,7 +22,7 @@ base16ToRaw :: [Char] -> Raw
 base16ToRaw = compress . map go
   where
   go :: Char -> Word8
-  go c = M.fromList (zip base16Alphabet [0..]) M.! c
+  go c = fromList (zip base16Alphabet [0..]) ! c
 
   compress :: [Word8] -> [Word8]
   compress [] = []

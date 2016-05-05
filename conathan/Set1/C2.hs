@@ -1,9 +1,7 @@
-module C2 where
+module Set1.C2 where
 
-import Data.Bits
-import Text.Printf
-
-import C1
+import Common
+import Set1.C1 hiding ( main )
 
 fixedXor :: [Char] -> [Char] -> [Char]
 fixedXor x y = rawToBase16 (zipWith xor (base16ToRaw x) (base16ToRaw y))
