@@ -2,7 +2,9 @@ module C3 where
 
 import Control.Monad (guard)
 import Data.Bits (xor)
-import Data.Char (isPrint)
+import Data.Char
+import Data.Function (on)
+import Data.List (sortOn)
 import Data.Word (Word8)
 
 import C1 hiding (isCorrect)
@@ -18,3 +20,21 @@ candidates = do
       plaintext = map (toEnum . fromIntegral) plainBytes
   guard (and $ map isPrint plaintext)
   return plaintext
+
+rankedCandidates :: [String]
+rankedCandidates = sortOn score candidates
+  where
+  score :: String -> Int
+  score = sum . map f
+
+  f :: Char -> Int
+  f c = if c `elem` common
+           then 0
+           else 1
+
+highestRank = head rankedCandidates
+
+common :: [Char]
+common = concat $ zipWith (\x y -> [x,y]) ls (map toLower ls)
+  where
+  ls = "ETAOIN SHRDLU"
