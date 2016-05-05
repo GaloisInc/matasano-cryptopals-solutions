@@ -1,0 +1,2 @@
+* TODO profile C4 and make it faster
+* TODO try using a bit-vector library for bit manipulation in C1
