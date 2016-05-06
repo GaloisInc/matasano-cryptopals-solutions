@@ -1,10 +1,10 @@
-* TODO profile C4 and make it faster
+* TODO [#B] profile C4 (or C3) and make it faster
 * TODO try using a bit-vector library for bit manipulation in C1
-* TODO try using parallelism to solve keys
+* TODO [#B] try using parallelism to solve keys
 - singleCharXors
 - multiCharXors ? but if singleCharXors is already parallel, then we
   don't need to add another level of parallelism.
-* TODO improve singleCharXor ranking function to give correct keys highest score in C6
+* TODO [#A] improve singleCharXor ranking function to give correct keys highest score in C6
 the four highest ranked keys have score
 1) 2671
 2) 2669
@@ -28,3 +28,5 @@ statistically motivated frequency-based score I guess ...)
 A scoring function that does not penalize longer keys can't
 distinguish repeated correct key from minimal correct key, but that's
 a minor concern.
+* TODO [#B] update base-64 *encoding* to handle inputs which aren't a multiple of 3 bytes
+* TODO [#B] add quickcheck tests for encoding and decoding
