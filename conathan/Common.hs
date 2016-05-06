@@ -14,7 +14,7 @@ module Common
 import Control.Monad ( forM_ )
 import Data.Bits
 import Data.Char ( chr, isAlphaNum, isAscii, isPrint, isPunctuation
-                 , isSymbol )
+                 , isSymbol, ord )
 import Data.List ( sort, sortOn )
 import Data.Map ( Map, fromList, (!) )
 import Data.Word

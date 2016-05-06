@@ -10,7 +10,7 @@ rankSingleCharXors base16 = reverse . sort $
   [ (score, key, ascii)
   | key <- [0..255]
   , plainText <- [zipWith xor raw (repeat key)]
-  , ascii <- [rawToChar plainText]
+  , ascii <- [rawToString plainText]
   , score <- [rank ascii]
   ]
   where

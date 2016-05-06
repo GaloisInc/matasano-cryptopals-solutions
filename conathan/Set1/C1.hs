@@ -69,8 +69,11 @@ base64ToRaw xs =
     else
       fromList (zip base64Alphabet [0..]) ! c
 
-rawToChar :: Raw -> [Char]
-rawToChar = map (chr . fromIntegral)
+stringToRaw :: String -> Raw
+stringToRaw = map (fromIntegral . ord)
+
+rawToString :: Raw -> [Char]
+rawToString = map (chr . fromIntegral)
 
 rawToBase16 :: Raw -> [Char]
 rawToBase16 (b:bytes) =
@@ -129,4 +132,4 @@ base64DecodeTest :: IO ()
 base64DecodeTest = do
   base64 <- concat . lines <$>
     readFile "Set1/base64attachment.txt"
-  putStrLn $ (rawToChar . base64ToRaw) base64
+  putStrLn $ (rawToString . base64ToRaw) base64
