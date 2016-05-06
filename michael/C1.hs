@@ -45,16 +45,24 @@ base64CharToInt = array (min_char,max_char) (zip base64Alphabet [0..])
   max_char = maximum base64Alphabet
 
 factorize :: Integral a => a -> a -> [a]
-factorize base = reverse . go
+factorize bitWidth = reverse . go
   where
   go total = if total == 0
                 then []
-                else let (total',modded) = total `divMod` base
+                else let (total',modded) = total `divMod` (2^bitWidth)
                       in modded:(go total')
 
-unfactorize :: Num a => a -> [a] -> a
-unfactorize base = sum . zipWith (*) bases . reverse
+padToWidth :: Int -> a -> [a] -> [a]
+padToWidth len v xs = let lenXs = length xs
+                       in case len `compare` lenXs of
+                            LT -> error "input is longer than desired length"
+                            EQ -> xs
+                            GT -> replicate (len-lenXs) v ++ xs
+
+unfactorize :: Integral a => a -> [a] -> a
+unfactorize bitWidth = sum . zipWith (*) bases . reverse
   where
+  base = 2^bitWidth
   bases = map (base^) [0..]
 
 
@@ -62,12 +70,12 @@ encodeHex :: [Byte] -> [Char]
 encodeHex = concatMap encodeHex'
   where
   encodeHex' :: Byte -> [Char]
-  encodeHex' i = map (hexIntToChar !) (factorize (2^4) (fromIntegral i))
+  encodeHex' i = map (hexIntToChar !) (padToWidth 2 0 (factorize 4 (fromIntegral i)))
 
 decodeHex :: [Char] -> [Byte]
 decodeHex (a:b:rest) = byte : decodeHex rest
   where
-  byte = fromIntegral $ unfactorize (2^4) (map (hexCharToInt !) [a,b])
+  byte = fromIntegral $ unfactorize 4 (map (hexCharToInt !) [a,b])
 decodeHex [] = []
 decodeHex _ = error "Non even number of hex chars"
 
@@ -76,9 +84,9 @@ encodeBase64 (a:b:c:rest) = encodeBase64' (a,b,c)
                          ++ encodeBase64 rest
   where
   encodeBase64' :: (Byte,Byte,Byte) -> [Char]
-  encodeBase64' (a,b,c) = map (base64IntToChar !) (factorize (2^6) i)
+  encodeBase64' (a,b,c) = map (base64IntToChar !) (padToWidth 4 0 (factorize 6 i))
     where
-    i = unfactorize (2^8) (map fromIntegral [a,b,c])
+    i = unfactorize 8 (map fromIntegral [a,b,c])
 encodeBase64 [] = []
 encodeBase64 _ = error "Non multiple-of-3-length of bytes"
 
@@ -87,9 +95,9 @@ decodeBase64 (a:b:c:d:rest) = decodeBase64' (a,b,c,d)
                            ++ decodeBase64 rest
   where
   decodeBase64' :: (Char,Char,Char,Char) -> [Byte]
-  decodeBase64' (a,b,c,d) = map fromIntegral (factorize (2^8) i)
+  decodeBase64' (a,b,c,d) = map fromIntegral (padToWidth 3 0 (factorize 8 i))
     where
-    i = unfactorize (2^6) (map (base64CharToInt !) [a,b,c,d])
+    i = unfactorize 6 (map (base64CharToInt !) [a,b,c,d])
 decodeBase64 [] = []
 decodeBase64 _ = error "Non multiple-of-4-length of base64 chars"
 
