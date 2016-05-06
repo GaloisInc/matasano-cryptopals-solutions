@@ -39,10 +39,10 @@ base64IntToChar = array (0,len) (zip [0..] base64Alphabet)
   len = length base64Alphabet - 1
 
 base64CharToInt :: Array Char Int
-base64CharToInt = array (min_char,max_char) (zip base64Alphabet [0..])
+base64CharToInt = array (min_char,max_char) (('=',0):(zip base64Alphabet [0..]))
   where
-  min_char = minimum base64Alphabet
-  max_char = maximum base64Alphabet
+  min_char = minimum ('=':base64Alphabet)
+  max_char = maximum ('=':base64Alphabet)
 
 factorize :: Integral a => a -> a -> [a]
 factorize bitWidth = reverse . go
@@ -82,22 +82,30 @@ decodeHex _ = error "Non even number of hex chars"
 encodeBase64 :: [Byte] -> [Char]
 encodeBase64 (a:b:c:rest) = encodeBase64' (a,b,c)
                          ++ encodeBase64 rest
-  where
-  encodeBase64' :: (Byte,Byte,Byte) -> [Char]
-  encodeBase64' (a,b,c) = map (base64IntToChar !) (padToWidth 4 0 (factorize 6 i))
-    where
-    i = unfactorize 8 (map fromIntegral [a,b,c])
 encodeBase64 [] = []
-encodeBase64 _ = error "Non multiple-of-3-length of bytes"
+encodeBase64 bs = let [a,b,c] = take 3 (bs ++ repeat 0)
+                      padLen = 3 - length bs
+                      goodLen = 4 - padLen
+                      pad = replicate padLen '='
+                      good = take goodLen (encodeBase64' (a,b,c))
+                   in good++pad
+
+encodeBase64' :: (Byte,Byte,Byte) -> [Char]
+encodeBase64' (a,b,c) = map (base64IntToChar !) (padToWidth 4 0 (factorize 6 i))
+  where
+  i = unfactorize 8 (map fromIntegral [a,b,c])
 
 decodeBase64 :: [Char] -> [Byte]
 decodeBase64 (a:b:c:d:rest) = decodeBase64' (a,b,c,d)
                            ++ decodeBase64 rest
   where
   decodeBase64' :: (Char,Char,Char,Char) -> [Byte]
-  decodeBase64' (a,b,c,d) = map fromIntegral (padToWidth 3 0 (factorize 8 i))
+  decodeBase64' (a,b,c,d) = take (3-numEqs) bs
     where
-    i = unfactorize 6 (map (base64CharToInt !) [a,b,c,d])
+    cs = [a,b,c,d]
+    i = unfactorize 6 (map (base64CharToInt !) cs)
+    numEqs = length $ filter (== '=') cs
+    bs = map fromIntegral (padToWidth 3 0 (factorize 8 i))
 decodeBase64 [] = []
 decodeBase64 _ = error "Non multiple-of-4-length of base64 chars"
 
