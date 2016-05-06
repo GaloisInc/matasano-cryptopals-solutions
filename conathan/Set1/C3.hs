@@ -5,8 +5,8 @@ import Set1.C1 hiding ( main )
 import Set1.C2 hiding ( main )
 
 -- Return ranked encryptions, sorted decreasing by score.
-rankSingleCharXors :: Base16 -> [(Int, Word8, String)]
-rankSingleCharXors base16 = reverse . sort $
+rankSingleCharXors :: Raw -> [(Int, Word8, String)]
+rankSingleCharXors raw = reverse . sort $
   [ (score, key, ascii)
   | key <- [0..255]
   , plainText <- [zipWith xor raw (repeat key)]
@@ -14,8 +14,6 @@ rankSingleCharXors base16 = reverse . sort $
   , score <- [rank ascii]
   ]
   where
-  raw = base16ToRaw base16
-
   rank :: String -> Int
   rank ascii = length $ filter isGood ascii
 
@@ -45,7 +43,7 @@ cOOKINGmcSLIKEAPOUNDOFBACON
 -}
 main :: IO ()
 main = do
-  forM_ (take 5 $ rankSingleCharXors base16) $ \(score, key, ascii) -> do
+  forM_ (take 5 $ rankSingleCharXors (base16ToRaw base16)) $ \(score, key, ascii) -> do
     printf "Score = %i, key = %i, plaintext =\n%s\n\n"
       score key ascii
   where

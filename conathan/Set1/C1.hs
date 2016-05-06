@@ -15,10 +15,10 @@ base64Alphabet = ['A'..'Z'] ++ ['a'..'z'] ++ ['0'..'9'] ++ ['+','/']
 base64Pad :: Char
 base64Pad = '='
 
-base16ToBase64 :: [Char] -> [Char]
+base16ToBase64 :: Base16 -> Base64
 base16ToBase64 = rawToBase64 . base16ToRaw
 
-base16ToRaw :: [Char] -> Raw
+base16ToRaw :: Base16 -> Raw
 base16ToRaw = compress . map go
   where
   go :: Char -> Word8
@@ -29,7 +29,7 @@ base16ToRaw = compress . map go
   compress (high:low:xs) = ((high `shiftL` 4) .|. low) : compress xs
   compress _ = error "compress: FIXME: handle odd number of hex digits."
 
-base64ToRaw :: [Char] -> Raw
+base64ToRaw :: Base64 -> Raw
 base64ToRaw xs =
   if length xs `mod` 4 /= 0 then
     error "base64ToRaw: expected multiple of 4 many base-64 chars!"
@@ -72,16 +72,16 @@ base64ToRaw xs =
 stringToRaw :: String -> Raw
 stringToRaw = map (fromIntegral . ord)
 
-rawToString :: Raw -> [Char]
+rawToString :: Raw -> String
 rawToString = map (chr . fromIntegral)
 
-rawToBase16 :: Raw -> [Char]
+rawToBase16 :: Raw -> Base16
 rawToBase16 (b:bytes) =
   [ base16Alphabet !! fromIntegral x | x <- [b `shiftR` 4, b .&. 0xf] ] ++
   rawToBase16 bytes
 rawToBase16 [] = []
 
-rawToBase64 :: Raw -> [Char]
+rawToBase64 :: Raw -> Base64
 rawToBase64 = go
   where
   go :: [Word8] -> [Char]
@@ -120,7 +120,7 @@ main = do
 
   base64DecodeTest
   where
-  tests :: [([Char],[Char])]
+  tests :: [(Base16,Base64)]
   tests =
     [ ( "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
       , "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"

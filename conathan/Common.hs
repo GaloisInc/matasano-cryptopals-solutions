@@ -15,7 +15,7 @@ import Control.Monad ( forM_ )
 import Data.Bits
 import Data.Char ( chr, isAlphaNum, isAscii, isPrint, isPunctuation
                  , isSymbol, ord )
-import Data.List ( sort, sortOn )
+import Data.List ( sort, sortOn, transpose )
 import Data.Map ( Map, fromList, (!) )
 import Data.Word
 import Debug.Trace

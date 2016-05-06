@@ -1,2 +1,30 @@
 * TODO profile C4 and make it faster
 * TODO try using a bit-vector library for bit manipulation in C1
+* TODO try using parallelism to solve keys
+- singleCharXors
+- multiCharXors ? but if singleCharXors is already parallel, then we
+  don't need to add another level of parallelism.
+* TODO improve singleCharXor ranking function to give correct keys highest score in C6
+the four highest ranked keys have score
+1) 2671
+2) 2669
+3) 2667
+4) 2269
+and the third one is the solution. the fourth is way lower, so can
+easily be ignored, but the top three are close. the first and second
+keys are *almost* three copies of the correct key, except they have
+some non-sense characters. I don't understand why multiple copies the
+*correct* key doesn't beat multiple copies of *almost the correct*
+key.
+
+The top two keys result in some non-printable characters in the
+plaintext, and so should be lower score than the correct key I
+think??? Perhaps they make up by having less punctuation, which I
+penalize (so, I could give zero score to non-printable, but e.g. 0.5
+score to printable non-alphanumeric, 0.75 to numbers, and 0.9 to
+capital letters, and 1 to lowercase: all this just approximates a
+statistically motivated frequency-based score I guess ...)
+
+A scoring function that does not penalize longer keys can't
+distinguish repeated correct key from minimal correct key, but that's
+a minor concern.

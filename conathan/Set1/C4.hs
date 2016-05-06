@@ -1,6 +1,20 @@
 module Set1.C4 where
 
+{- Detect single-character XOR
+
+One of the 60-character strings in this file has been encrypted by single-character XOR.
+
+Find it.
+
+(Your code from #3 should help.)
+-}
+
+{-
+I wonder where the other lines came from? A secret challenge?
+-}
+
 import Common
+import Set1.C1 hiding ( main )
 import Set1.C3 hiding ( main )
 
 {-
@@ -23,12 +37,9 @@ main :: IO ()
 main = do
   -- Downloaded from the challenge page at
   -- http://cryptopals.com/static/challenge-data/4.txt.
-  base16s <- lines <$> readFile "Set1/challenge-4-data.txt"
+  raws <- map base16ToRaw . lines <$> readFile "Set1/4.txt"
   let rankedAsciis =
-        reverse . sort . concat . map (take 5) . map rankSingleCharXors $
-          base16s
-
+        reverse . sort . concat . map (take 5) . map rankSingleCharXors $ raws
   forM_ (take 5 $ rankedAsciis) $ \(score, key, ascii) -> do
     printf "Score = %i, key = %i, plaintext =\n%s\n\n"
       score key ascii
-  where
