@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 module Set1.C7 where
 {-
 ### AES in ECB mode
@@ -24,14 +25,15 @@ lot* later on, and not just for attacking ECB.
 -}
 
 {-
-I'm interpreting the above as "use openssl command line program, but
-script it instead of directly typing a command line.
-
 ECB mode is "electronic codebook mode". It's the simple, deprecated
 mode where each block of plaintext is encrypted indepedently using the
 same key with the block cipher.
 -}
 
+import qualified Crypto.Cipher.Types as C
+import qualified Crypto.Cipher.AES as C
+import qualified Crypto.Error as C
+import qualified Data.ByteArray as BA
 import Data.Monoid ( (<>) )
 import Data.String ( fromString )
 import Data.Text ( Text, pack, unpack )
@@ -66,8 +68,37 @@ aes128EcbDecryptOpenSsl key ciphertext = do
   case exitCode of
     ExitSuccess -> return $ unpack plaintext
     ExitFailure{} -> error "Nonzero exitcode from 'openssl'!"
+
+aes128EcbDecrypt :: Raw -> Raw -> Raw
+aes128EcbDecrypt key ciphertext =
+  case C.cipherInit (BA.pack key :: BA.Bytes) of
+    C.CryptoPassed (cipher :: C.AES128) ->
+      BA.unpack $ C.ecbDecrypt cipher (BA.pack ciphertext :: BA.Bytes)
+    C.CryptoFailed reason -> error $ "Crypto failed: " ++ show reason
     
 main :: IO ()
 main = do
   base64Ciphertext <- readFile "Set1/7.txt"
-  putStrLn =<< aes128EcbDecryptOpenSsl (stringToRaw "YELLOW SUBMARINE") base64Ciphertext
+  plaintext_1 <- aes128EcbDecryptOpenSsl (stringToRaw "YELLOW SUBMARINE") base64Ciphertext
+
+  ciphertext <- base64ToRaw . concat . lines <$> readFile "Set1/7.txt"
+  let plaintext_2 = rawToString $ aes128EcbDecrypt (stringToRaw "YELLOW SUBMARINE") ciphertext
+
+  printf "================================================================\n"
+  printf "The openssl plaintext is:\n"
+  printf "%s\n" plaintext_1
+  printf "\n"
+  printf "%s\n" (rawToBase16 . stringToRaw $ plaintext_1)
+  printf "\n"
+  printf "================================================================\n"
+  printf "The cryptonite plaintext is:\n"
+  printf "%s\n" plaintext_2
+  printf "\n"
+  printf "%s\n" (rawToBase16 . stringToRaw $ plaintext_2)
+  printf "\n"
+  printf "================================================================\n"
+  printf "Are the two plaintexts equal: %s\n" (show $ plaintext_1 == plaintext_2)
+  printf "Length of plaintexts: %s\n" (show $ map length [plaintext_1, plaintext_2])
+  -- The cryptonite version has four trailing 0x04 bytes, which is
+  -- apparently ASCII EOT (end of transmission), and used for EOF in
+  -- Unix. No idea what's going on here.
