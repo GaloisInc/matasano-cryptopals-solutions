@@ -14,7 +14,10 @@ key :: [Byte]
 key = cycle (map (fromIntegral . fromEnum) "ICE")
 
 unasciify :: String -> [Byte]
-unasciify = map (fromIntegral . fromEnum)
+unasciify = map (fromIntegral . ord)
+
+asciify :: [Byte] -> String
+asciify = map (chr . fromIntegral)
 
 iceify :: [Byte] -> [Byte]
 iceify = zipWith (xor) key
