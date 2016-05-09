@@ -1,4 +1,4 @@
-module C6 where
+module Set1.C6 where
 {-
 ### Break repeating-key XOR
 
