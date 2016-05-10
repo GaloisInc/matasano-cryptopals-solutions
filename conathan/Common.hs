@@ -5,6 +5,7 @@ module Common
   , module Data.Char
   , module Data.List
   , module Data.Map.Strict
+  , module Data.Monoid
   , module Data.Word
   , module Debug.Trace
   , module Text.Printf
@@ -18,6 +19,7 @@ import Data.Char ( chr, isAlphaNum, isAscii, isPrint, isPunctuation
 import Data.List ( foldl', sort, sortOn, transpose )
 import Data.Map.Strict ( Map, fromList, (!) )
 import Data.Maybe ( maybe )
+import Data.Monoid ( (<>) )
 import Data.Word
 import Debug.Trace
 import Text.Printf

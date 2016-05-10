@@ -102,3 +102,5 @@ main = do
   -- The cryptonite version has four trailing 0x04 bytes, which is
   -- apparently ASCII EOT (end of transmission), and used for EOF in
   -- Unix. No idea what's going on here.
+  --
+  -- Update: this is PKCS#7 padding, as covered in Challenge 9.
