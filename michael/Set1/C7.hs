@@ -18,7 +18,7 @@ main :: IO ()
 main = do
   aes128 <- throwCryptoErrorIO (cipherInit keyBS) :: IO AES128
 
-  cipherBytes <- (decodeBase64 . concat . lines) <$> readFile "7.txt"
+  cipherBytes <- (decodeBase64 . concat . lines) <$> readFile "Set1/7.txt"
 
   let cipherBS = B.pack cipherBytes
       plainBS = ecbDecrypt aes128 cipherBS

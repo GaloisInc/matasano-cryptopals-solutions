@@ -43,7 +43,7 @@ main = do
 
 getKeys :: IO [String]
 getKeys = do
-  f <- readFile "6.txt"
+  f <- readFile "Set1/6.txt"
   let bytes = decodeBase64 (concat (lines f))
       keySizes = map fst (take 4 (findBestKeySizes bytes))
   forM keySizes $ \keySize -> do

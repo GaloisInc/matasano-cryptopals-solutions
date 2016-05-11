@@ -18,7 +18,7 @@ checkRepeat bs = ( origLen /= dedupLen
 
 main :: IO ()
 main = do
-  cipherBytesList <- (map decodeHex . lines) <$> readFile "8.txt"
+  cipherBytesList <- (map decodeHex . lines) <$> readFile "Set1/8.txt"
   forM_ cipherBytesList $ \bs -> do
     let (doesRepeat, orig, deduped) = checkRepeat bs
     if doesRepeat
