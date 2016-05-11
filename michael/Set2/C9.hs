@@ -1,8 +1,7 @@
 module Set2.C9 where
 
 
-import Set1.C1 hiding ( isCorrect,main )
-import Set1.C5 hiding ( isCorrect,main )
+import Set1
 
 isCorrect :: Bool
 isCorrect = actual == expected
