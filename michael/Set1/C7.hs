@@ -14,14 +14,15 @@ keyBS = B.pack (unasciify keyString)
   where
   keyString = "YELLOW SUBMARINE"
 
+myECBDecrypt :: [Byte] -> [Byte]
+myECBDecrypt = B.unpack . ecbDecrypt aes128 . B.pack
+  where
+  aes128 = throwCryptoError (cipherInit keyBS) :: AES128
+
 main :: IO ()
 main = do
-  aes128 <- throwCryptoErrorIO (cipherInit keyBS) :: IO AES128
-
   cipherBytes <- (decodeBase64 . concat . lines) <$> readFile "Set1/7.txt"
 
-  let cipherBS = B.pack cipherBytes
-      plainBS = ecbDecrypt aes128 cipherBS
-      plainBytes = B.unpack plainBS
+  let plainBytes = myECBDecrypt cipherBytes
 
   mapM_ putStrLn (lines (asciify plainBytes))
