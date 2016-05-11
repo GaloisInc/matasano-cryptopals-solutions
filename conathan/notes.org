@@ -29,4 +29,11 @@ A scoring function that does not penalize longer keys can't
 distinguish repeated correct key from minimal correct key, but that's
 a minor concern.
 * TODO [#B] update base-64 *encoding* to handle inputs which aren't a multiple of 3 bytes
-* TODO [#B] add quickcheck tests for encoding and decoding
+* TODO [#B] add quickcheck tests for encoding and decoding in C1
+* TODO [#B] rethink module strategy
+e.g., i could create a 'Set1' module which exports all of the
+functions in the 'Set1.C*' modules.
+
+or, i could start implementing all "useful" functions in separate, non
+'Set*.C*' modules, and then import them into the 'Set*.C*' modules
+which would now only include tests.

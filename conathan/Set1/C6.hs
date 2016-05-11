@@ -97,8 +97,8 @@ rankMultiCharXors keyLen ciphertext = [(score, key, plaintext)]
     sum [ fromIntegral columnScore | (columnScore,_,_) <- columnSolutions ]
 
 -- Break input into chunks of given size.
-chunks :: Int -> Raw -> [Raw]
-chunks size raw = takeWhile (not . null) . map (take size) $ iterate (drop size) raw
+chunks :: Int -> [a] -> [[a]]
+chunks size = takeWhile (not . null) . map (take size) . iterate (drop size)
 
 -- Find best key for all keylengths in given range and return
 -- score-ranked solutions.

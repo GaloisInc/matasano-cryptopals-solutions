@@ -34,9 +34,9 @@ import qualified Crypto.Cipher.Types as C
 import qualified Crypto.Cipher.AES as C
 import qualified Crypto.Error as C
 import qualified Data.ByteArray as BA
-import Data.Monoid ( (<>) )
 import Data.String ( fromString )
 import Data.Text ( Text, pack, unpack )
+import qualified Test.QuickCheck as QC
 import Turtle ( ExitCode(..) )
 import Turtle.Prelude ( shellStrict )
 
@@ -69,15 +69,29 @@ aes128EcbDecryptOpenSsl key ciphertext = do
     ExitSuccess -> return $ unpack plaintext
     ExitFailure{} -> error "Nonzero exitcode from 'openssl'!"
 
+aes128EcbEncrypt :: Raw -> Raw -> Raw
+aes128EcbEncrypt key ciphertext =
+  case C.cipherInit (BA.pack key :: BA.Bytes) of
+    C.CryptoPassed (cipher :: C.AES128) ->
+      BA.unpack $ C.ecbEncrypt cipher (BA.pack ciphertext :: BA.Bytes)
+    C.CryptoFailed reason -> error $ "aes128EcbEncrypt: " ++ show reason
+
 aes128EcbDecrypt :: Raw -> Raw -> Raw
 aes128EcbDecrypt key ciphertext =
   case C.cipherInit (BA.pack key :: BA.Bytes) of
     C.CryptoPassed (cipher :: C.AES128) ->
       BA.unpack $ C.ecbDecrypt cipher (BA.pack ciphertext :: BA.Bytes)
-    C.CryptoFailed reason -> error $ "Crypto failed: " ++ show reason
+    C.CryptoFailed reason -> error $ "aes128EcbDecrypt: " ++ show reason
     
-main :: IO ()
-main = do
+----------------------------------------------------------------
+
+prop_aes128_roundtrip =
+  QC.forAll (QC.vector 16) $ \key ->
+    QC.forAll (QC.vector 16) $ \plaintext ->
+      plaintext == aes128EcbDecrypt key (aes128EcbEncrypt key plaintext)
+
+compare_cryptonite_to_openssl :: IO ()
+compare_cryptonite_to_openssl = do
   base64Ciphertext <- readFile "Set1/7.txt"
   plaintext_1 <- aes128EcbDecryptOpenSsl (stringToRaw "YELLOW SUBMARINE") base64Ciphertext
 
@@ -104,3 +118,8 @@ main = do
   -- Unix. No idea what's going on here.
   --
   -- Update: this is PKCS#7 padding, as covered in Challenge 9.
+
+main :: IO ()
+main = do
+  QC.quickCheck  prop_aes128_roundtrip
+  compare_cryptonite_to_openssl
