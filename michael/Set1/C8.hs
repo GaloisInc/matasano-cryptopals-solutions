@@ -1,10 +1,10 @@
-module C8 where
+module Set1.C8 where
 
 import Control.Monad
 import Data.List.Split (chunksOf)
 import qualified Data.Set as S
 
-import C1 hiding ( isCorrect )
+import Set1.C1 hiding ( isCorrect )
 
 checkRepeat :: Ord a => [a] -> (Bool,[[a]],[[a]])
 checkRepeat bs = ( origLen /= dedupLen

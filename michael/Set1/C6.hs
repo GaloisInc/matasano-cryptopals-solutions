@@ -1,13 +1,13 @@
-module C6 where
+module Set1.C6 where
 
 import Control.Monad
 import Data.Bits (popCount,xor)
 import Data.List (sortOn,transpose)
 import Data.List.Split (chunksOf)
 
-import C1 hiding (isCorrect)
-import C3 hiding (isCorrect)
-import C5 hiding (isCorrect,main)
+import Set1.C1 hiding (isCorrect)
+import Set1.C3 hiding (isCorrect)
+import Set1.C5 hiding (isCorrect,main)
 
 hammingDistance :: [Byte] -> [Byte] -> Int
 hammingDistance b1 b2 = sum (map popCount (zipWith (xor) b1 b2))

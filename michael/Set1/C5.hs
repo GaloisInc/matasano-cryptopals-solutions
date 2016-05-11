@@ -1,4 +1,4 @@
-module C5 where
+module Set1.C5 where
 
 import Control.Monad (guard)
 import Data.Bits (xor)
@@ -7,8 +7,8 @@ import Data.List (sortOn)
 import Data.Word (Word8)
 import System.IO
 
-import C1 hiding (isCorrect)
-import C3 hiding (isCorrect)
+import Set1.C1 hiding (isCorrect)
+import Set1.C3 hiding (isCorrect)
 
 key :: [Byte]
 key = cycle (map (fromIntegral . fromEnum) "ICE")

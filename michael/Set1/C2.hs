@@ -1,8 +1,8 @@
-module C2 where
+module Set1.C2 where
 
 import Data.Bits (xor)
 
-import C1 hiding (isCorrect)
+import Set1.C1 hiding (isCorrect)
 
 
 isCorrect :: Bool

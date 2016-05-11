@@ -1,7 +1,7 @@
 
 import Test.QuickCheck
 
-import C1
+import Set1.C1
 
 
 prop_hex_encode_decode_id :: [Byte] -> Bool

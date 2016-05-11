@@ -1,4 +1,4 @@
-module C4 where
+module Set1.C4 where
 
 import Control.Monad (guard)
 import Data.Bits (xor)
@@ -6,7 +6,7 @@ import Data.Char
 import Data.List (sortOn)
 import Data.Word (Word8)
 
-import C3
+import Set1.C3
 
 main :: IO ()
 main = do

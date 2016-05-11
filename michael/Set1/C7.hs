@@ -1,4 +1,4 @@
-module C7 where
+module Set1.C7 where
 
 import Crypto.Cipher.AES
 import Crypto.Cipher.Types
@@ -6,8 +6,8 @@ import Crypto.Error
 import qualified Data.ByteString as B
 import System.Exit
 
-import C1 hiding ( isCorrect )
-import C5 hiding ( isCorrect,main )
+import Set1.C1 hiding ( isCorrect )
+import Set1.C5 hiding ( isCorrect,main )
 
 keyBS :: B.ByteString
 keyBS = B.pack (unasciify keyString)

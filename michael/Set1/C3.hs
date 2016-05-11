@@ -1,4 +1,4 @@
-module C3 where
+module Set1.C3 where
 
 import Control.Monad (guard)
 import Data.Bits (xor)
@@ -6,7 +6,7 @@ import Data.Char
 import Data.List (sortOn)
 import Data.Word (Word8)
 
-import C1 hiding (isCorrect)
+import Set1.C1 hiding (isCorrect)
 
 ciphertext :: [Char]
 ciphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
