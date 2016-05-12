@@ -87,8 +87,10 @@ aes128EcbDecrypt key ciphertext =
 
 prop_aes128_roundtrip =
   QC.forAll (QC.vector 16) $ \key ->
-    QC.forAll (QC.vector 16) $ \plaintext ->
-      plaintext == aes128EcbDecrypt key (aes128EcbEncrypt key plaintext)
+    QC.forAll QC.arbitrary $ \(QC.Positive numBlocks) ->
+      QC.forAll (QC.vector (16 * numBlocks)) $ \plaintext ->
+        QC.collect ("numBlocks", numBlocks) $
+        plaintext == aes128EcbDecrypt key (aes128EcbEncrypt key plaintext)
 
 compare_cryptonite_to_openssl :: IO ()
 compare_cryptonite_to_openssl = do
@@ -122,4 +124,4 @@ compare_cryptonite_to_openssl = do
 main :: IO ()
 main = do
   QC.quickCheck  prop_aes128_roundtrip
-  compare_cryptonite_to_openssl
+  -- compare_cryptonite_to_openssl

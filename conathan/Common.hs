@@ -24,6 +24,12 @@ import Data.Word
 import Debug.Trace
 import Text.Printf
 
+----------------------------------------------------------------
+
 type Raw = [Word8]
 type Base16 = [Char]
 type Base64 = [Char]
+
+-- Copied from http://hackage.haskell.org/package/TraceUtils.
+traceId' :: Show a => String -> a -> a
+traceId' prefix x = trace (prefix++show x) x

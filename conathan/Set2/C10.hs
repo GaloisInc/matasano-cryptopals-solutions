@@ -36,7 +36,7 @@ to learn from it?
 - [ ] what does "ASCII 0" mean? they write '\\x00', but ASCII zero is '\\x30' ???.
 -}
 
-module Set1.C10 where
+module Set2.C10 where
 
 import qualified Crypto.Cipher.Types as C
 import qualified Crypto.Cipher.AES as C
@@ -61,22 +61,39 @@ cbcEncrypt blockSize iv encrypt plaintext = ciphertext
 cbcDecrypt :: Int -> Raw -> (Raw -> Raw) -> (Raw -> Raw)
 cbcDecrypt blockSize iv decrypt ciphertext = plaintext
   where
-  chunks_ = chunks blockSize ciphertext
+  ciphertexts = chunks blockSize ciphertext
   -- Decryption is parallelizable.
-  xoredPlaintexts = map decrypt chunks_
-  plaintexts = zipWith (zipWith xor) xoredPlaintexts ([iv]++xoredPlaintexts)
+  xoredPlaintexts = map decrypt ciphertexts
+  plaintexts = zipWith (zipWith xor) xoredPlaintexts ([iv]++ciphertexts)
   plaintext = pkcs7Unpad $ concat plaintexts
 
 ----------------------------------------------------------------
 
 prop_cbc_aes128_encrypt_decrypt_roundtrip =
-  QC.forAll (QC.vector 16) $ \iv ->
-    QC.forAll (QC.vector 16) $ \key ->
+  QC.forAll (QC.vector blockSize) $ \iv ->
+    QC.forAll (QC.vector blockSize) $ \key ->
       QC.forAll QC.arbitrary $ \plaintext ->
-        let ciphertext = cbcEncrypt 16 iv (aes128EcbEncrypt key) plaintext
-            plaintext' = cbcDecrypt 16 iv (aes128EcbDecrypt key) ciphertext
+        QC.collect ("num blocks", length plaintext `div` blockSize) $
+        let ciphertext = cbcEncrypt blockSize iv (aes128EcbEncrypt key) plaintext
+            plaintext' = cbcDecrypt blockSize iv (aes128EcbDecrypt key) ciphertext
         in
         plaintext == plaintext'
+  where
+  blockSize = 16
 
 main :: IO ()
-main = QC.quickCheck prop_cbc_aes128_encrypt_decrypt_roundtrip
+main = do
+  decrypt10Txt
+  QC.quickCheck prop_cbc_aes128_encrypt_decrypt_roundtrip
+  where
+  decrypt10Txt = do
+    ciphertext <- base64ToRaw . concat . lines <$> readFile "Set2/10.txt"
+    let plaintext   = cbcDecrypt 16 iv (aes128EcbDecrypt key) ciphertext
+    let ciphertext' = cbcEncrypt 16 iv (aes128EcbEncrypt key) plaintext
+    if ciphertext' /= ciphertext then
+      error "Renencryption produces different ciphertext!"
+    else
+      printf "plaintext:\n%s\n" (rawToString plaintext)
+    where
+    key = stringToRaw "YELLOW SUBMARINE"
+    iv = replicate 16 0

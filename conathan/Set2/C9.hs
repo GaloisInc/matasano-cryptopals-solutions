@@ -51,6 +51,8 @@ pkcs7Unpad plaintext =
 prop_pkcs7_round_trip =
   QC.forAll QC.arbitrary $ \blockSize ->
     QC.forAll QC.arbitrary $ \in_ ->
+      QC.collect ("(blocksize, length in_)", (blockSize, length in_)) $
+      QC.classify (blockSize <= length in_) "multiple blocks" $
       (blockSize > 0) QC.==> in_ == pkcs7Unpad (pkcs7Pad blockSize in_)
 
 main :: IO ()
