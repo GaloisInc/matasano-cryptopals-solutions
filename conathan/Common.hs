@@ -12,7 +12,7 @@ module Common
   ) where
 
 -- import qualified Data.ByteString as BS
-import Control.Monad ( forM_ )
+import Control.Monad ( forM_, replicateM )
 import Data.Bits
 import Data.Char ( chr, isAlphaNum, isAscii, isPrint, isPunctuation
                  , isSymbol, ord )
