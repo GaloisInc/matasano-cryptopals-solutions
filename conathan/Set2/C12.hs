@@ -65,6 +65,14 @@ block by using (n-1), then (n-2), down to zero 'A's (or whatever). To
 learn the second block, we again use (n-1), then (n-2), down to zero
 of any char, since we are now using the known block two chars to build
 the block two dictionaries.
+
+Also, the description could be better: in the last exercise our oracle
+function put random padding on the front and the back; the oracle here
+puts padding only on the back, and that padding is fixed. The
+
+    AES-128-ECB(your-string || unknown-string, random-key)
+
+makes everything clear, but the words before that are misleading.
 -}
 
 module Set2.C12 where
