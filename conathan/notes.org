@@ -1,3 +1,8 @@
+* convert descriptions to markdown using pandoc
+e.g.
+#+BEGIN_QUOTE
+pandoc http://cryptopals.com/sets/2/challenges/12 --to markdown
+#+END_QUOTE
 * TODO [#B] profile C4 (or C3) and make it faster
 * TODO try using a bit-vector library for bit manipulation in C1
 * TODO [#B] try using parallelism to solve keys

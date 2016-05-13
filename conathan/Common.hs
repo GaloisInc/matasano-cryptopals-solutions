@@ -16,7 +16,7 @@ import Control.Monad ( forM_, replicateM )
 import Data.Bits
 import Data.Char ( chr, isAlphaNum, isAscii, isPrint, isPunctuation
                  , isSymbol, ord )
-import Data.List ( foldl', scanl', sort, sortOn, transpose )
+import Data.List ( foldl', foldl1', scanl', sort, sortOn, transpose )
 import Data.Map.Strict ( Map, fromList, (!) )
 import Data.Maybe ( maybe )
 import Data.Monoid ( (<>) )

@@ -69,11 +69,16 @@ encryptionOracle plaintext = do
           cbcEncrypt 16 iv (aes128EcbEncrypt key) paddedPlaintext
   return (cipherText, useEcb)
 
-prop_detectEcbCorrect =
-  QC.monadicIO $ do
-    (ciphertext, ecbWasUsed) <- QC.run $ encryptionOracle plaintext
-    QC.assert $ detectEcb ciphertext == ecbWasUsed
+-- The encryption oracle runs in IO, but I don't want to force
+-- 'detectEcb' to run in IO. So, we return a plaintext, and a function
+-- that will classify the corresponding ciphertext.
+mkDetectEcb :: Int -> (Raw, Raw -> Bool)
+mkDetectEcb blockSize = (plaintext, detectEcb)
   where
+  detectEcb ciphertext =
+    scoreEcbLikelihood blockSize ciphertext >=
+    ((numBlocks - nonzeroBlockBound) / numBlocks)
+
   numBlocks :: Num n => n
   numBlocks = 10
 
@@ -90,9 +95,12 @@ prop_detectEcbCorrect =
   --
   -- I.e., at most three blocks won't be the same.
   nonzeroBlockBound = 3
-  detectEcb ciphertext =
-    scoreEcbLikelihood 16 ciphertext >=
-    ((numBlocks - nonzeroBlockBound) / numBlocks)
+
+prop_detectEcbCorrect =
+  QC.monadicIO $ do
+    let (plaintext, detectEcb) = mkDetectEcb 16
+    (ciphertext, ecbWasUsed) <- QC.run $ encryptionOracle plaintext
+    QC.assert $ detectEcb ciphertext == ecbWasUsed
 
 main :: IO ()
 main = do
