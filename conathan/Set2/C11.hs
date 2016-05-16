@@ -76,13 +76,16 @@ mkDetectEcb :: Int -> (Raw, Raw -> Bool)
 mkDetectEcb blockSize = (plaintext, detectEcb)
   where
   detectEcb ciphertext =
-    scoreEcbLikelihood blockSize ciphertext >=
-    ((numBlocks - nonzeroBlockBound) / numBlocks)
+    let (absolute, _relative) = scoreEcbLikelihood blockSize ciphertext in
+    -- We only bound the absolute number, since in Challenge 12 the
+    -- relative number does not help, since we deal with a cipher that
+    -- appends arbitrary amounts of plaintext we don't control.
+    absolute >= (numBlocks - nonzeroBlockBound)
 
   numBlocks :: Num n => n
   numBlocks = 10
 
-  plaintext = replicate (numBlocks * 16) 0
+  plaintext = replicate (numBlocks * blockSize) 0
 
   -- In ECB mode, all of the blocks consisting of only zeros will map
   -- to the same ciphertext. So, which blocks might not be all zeros,
@@ -92,16 +95,34 @@ mkDetectEcb blockSize = (plaintext, detectEcb)
   -- - the last block, due to random padding or pkcs#7 padding;
   -- - the second to last block, due to random padding, when pkcs#7
   --   padding adds a full blocksize padding block.
+  -- - UPDATE: in Challenge 12, we deal with a cipher that appends more
+  --   plaintext, which we don't control, to our provided plaintext. So,
+  --   only the blocks we control will repeat.
   --
-  -- I.e., at most three blocks won't be the same.
+  -- I.e., at most three blocks generated from our provided plaintext.
   nonzeroBlockBound = 3
 
-prop_detectEcbCorrect =
+----------------------------------------------------------------
+
+prop_detectEcb_correct_1 :: QC.Property
+prop_detectEcb_correct_1 =
   QC.monadicIO $ do
     let (plaintext, detectEcb) = mkDetectEcb 16
     (ciphertext, ecbWasUsed) <- QC.run $ encryptionOracle plaintext
     QC.assert $ detectEcb ciphertext == ecbWasUsed
 
+-- | Here we test the kind of cipher used in Challenge 11: arbitrary
+-- padding on the back.
+prop_detectEcb_correct_2 :: QC.Property
+prop_detectEcb_correct_2 =
+  QC.forAll QC.arbitrary $ \(QC.Positive blockSize) ->
+    QC.forAll QC.arbitrary $ \suffix ->
+      let (plaintext, detectEcb) = mkDetectEcb blockSize in
+      -- TODO: Block size of 1 causes problems.
+      let encrypt = pkcs7Pad (1+blockSize) . (++ suffix) in
+      detectEcb (encrypt plaintext) == True
+
 main :: IO ()
 main = do
-  QC.quickCheck prop_detectEcbCorrect
+  QC.quickCheck prop_detectEcb_correct_1
+  QC.quickCheck prop_detectEcb_correct_2

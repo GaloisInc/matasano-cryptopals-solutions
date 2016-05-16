@@ -33,21 +33,21 @@ import Common
 import Set1.C1 hiding ( main )
 import Set1.C6 ( chunks )
 
--- | The score is the proportion of blocks that are duplicates.
-scoreEcbLikelihood :: Int -> Raw -> Double
-scoreEcbLikelihood bytesPerBlock ciphertext = score
+-- | The score is @(absolute number, proportion)@ of blocks that are
+-- duplicates.
+scoreEcbLikelihood :: Int -> Raw -> (Int, Double)
+scoreEcbLikelihood bytesPerBlock ciphertext = traceId' "(absolute, relative)" (absolute, relative)
   where
-  score =
-    (sum . filter (> 1) $ Map.elems counts) /
-    (fromIntegral $ length chunks_)
+  relative = fromIntegral absolute / (fromIntegral $ length chunks_)
+  absolute = sum . filter (> 1) $ Map.elems counts
   counts = foldl' countChunk Map.empty chunks_
   chunks_ = chunks bytesPerBlock ciphertext
-  countChunk map_ chunk = Map.alter (Just . maybe (1::Double) (+1)) chunk map_
+  countChunk map_ chunk = Map.alter (Just . maybe (1::Int) (+1)) chunk map_
 
 main :: IO ()
 main = do
   ciphertexts <- map base16ToRaw . lines <$> readFile "Set1/8.txt"
   let rankedCiphertexts =
-        [ (scoreEcbLikelihood (128 `div` 8) c, c) | c <- ciphertexts ]
+        [ (snd $ scoreEcbLikelihood (128 `div` 8) c, c) | c <- ciphertexts ]
   forM_ (reverse . sort $ rankedCiphertexts) $ \(score, ciphertext) -> do
     printf "Score: %0.2f\nCiphertext: %s\n" score (rawToBase16 ciphertext)
