@@ -36,7 +36,7 @@ import Set1.C6 ( chunks )
 -- | The score is @(absolute number, proportion)@ of blocks that are
 -- duplicates.
 scoreEcbLikelihood :: Int -> Raw -> (Int, Double)
-scoreEcbLikelihood bytesPerBlock ciphertext = traceId' "(absolute, relative)" (absolute, relative)
+scoreEcbLikelihood bytesPerBlock ciphertext = (absolute, relative)
   where
   relative = fromIntegral absolute / (fromIntegral $ length chunks_)
   absolute = sum . filter (> 1) $ Map.elems counts

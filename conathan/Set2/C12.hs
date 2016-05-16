@@ -60,11 +60,12 @@ tests about once a year.
 -}
 
 {-
+
 One thing to note: if n is the block size, then we learn the first
 block by using (n-1), then (n-2), down to zero 'A's (or whatever). To
 learn the second block, we again use (n-1), then (n-2), down to zero
-of any char, since we are now using the known block two chars to build
-the block two dictionaries.
+of any char, since we are now using the known block-one chars to build
+the block-two dictionaries.
 
 Also, the description could be better: in the last exercise our oracle
 function put random padding on the front and the back; the oracle here
@@ -72,7 +73,8 @@ puts padding only on the back, and that padding is fixed. The
 
     AES-128-ECB(your-string || unknown-string, random-key)
 
-makes everything clear, but the words before that are misleading.
+makes everything clear, but the words before that are unclear.
+
 -}
 
 module Set2.C12 where
@@ -104,52 +106,135 @@ secretKey = [0..15]
 
 ecbEncryptionOracle :: Raw -> Raw
 ecbEncryptionOracle plaintext =
-  aes128EcbEncrypt secretKey (plaintext ++ secretSuffix)
-
--- | Discover the block size of an encryption function, assuming it
--- produces ciphertexts that are a multiple of the blocksize. So,
--- e.g., a cipher mode using cipherblock stealing will not reveal the
--- underlying blocksize.
-discoverBlockSize :: (Raw -> Raw) -> Int
-discoverBlockSize encrypt =
-  -- The 20th prime is 71. Nathan "make things overly complicated"
-  -- Collins ...
-  foldl1' gcd $ map (length . encrypt . flip replicate 0) $
-    -- Lots of small numbers, and a few big numbers just in case.
-    take 20 primes ++ [250, 1000]
-  where
-  primes = sieve [2..]
-    where
-    sieve (p:ns) = p : sieve [ n | n <- ns, n `mod` p /= 0 ]
+  aes128EcbEncrypt secretKey (pkcs7Pad 16 $ plaintext ++ secretSuffix)
 
 -- | The prefix is assumed to be of length blocksize-1 bytes. The
 -- returned map gives the missing final byte, as a function of the
 -- encryption of @prefix++[missing byte]@.
-mkDictionary :: Raw -> (Raw -> Raw) -> Map Raw Word8
-mkDictionary prefix encrypt =
-  Map.fromList [ (encrypt (prefix++[k]), k) | k <- [minBound..maxBound] ]
+--
+-- We could change the dictionary to use a single block as key, which
+-- would be more efficient for long suffixes.
+mkDictionary :: Int -> Raw -> (Raw -> Raw) -> Map Raw Word8
+mkDictionary blockSize prefix encrypt =
+  assert "mkDictionary: bad prefix length!" (length prefix == blockSize - 1) $
+  Map.fromList [ (take blockSize $ encrypt (prefix++[k]), k)
+               | k <- [minBound..maxBound] ]
+
+-- | Learn ECB suffix length by growing prependend plaintext until a
+-- block boundary is reached. Assuming PKCS#7 padding is used, the
+-- number of blocks will increase by one when the suffix aligns with a
+-- block boundary. If the number of blocks at this point is k, and the
+-- plaintext length is p, then suffix length is
+--
+-- > (k-1) * blockSize - p
+discoverBlockAndSuffixSize :: (Raw -> Raw) -> (Int, Int)
+discoverBlockAndSuffixSize encrypt = go 0
+  where
+  go p =
+    let plaintext = replicate p 0 in
+    let plaintext' = 0 : plaintext in
+    let l = length (encrypt plaintext) in
+    let l' = length (encrypt plaintext') in
+    if l == l' then
+      go (p+1)
+    else
+      let blockSize = l' - l in
+      -- Here @plaintext'@ caused the ciphertext to grow by one block.
+      let suffixSize = l' - blockSize - (p + 1) in
+      (blockSize, suffixSize)
 
 -- | Learn the implicit suffix attached to plaintexts by given ECB
 -- encryption oracle.
 breakEcbSuffix :: (Raw -> Raw) -> Raw
 breakEcbSuffix encrypt =
-  let blockSize = discoverBlockSize encrypt in
+  let (blockSize, suffixSize) = discoverBlockAndSuffixSize encrypt in
   let (plaintext, detectEcb) = mkDetectEcb blockSize in
   if not $ detectEcb (encrypt plaintext) then
     error "breakEcb: not ECB!"
   else
-    go blockSize
+    go blockSize suffixSize
   where
-    go blockSize = undefined
+  go :: Int -> Int -> Raw
+  go blockSize suffixSize = go' []
+    where
+    -- Here @knownSuffix@ is the known prefix of secret suffix
+    -- appended to plaintexts by the encryption routine.
+    --
+    -- See block comment below for how @go'@ works.
+    go' :: Raw -> Raw
+    go' knownSuffix | length knownSuffix == suffixSize = knownSuffix
+                    | otherwise =
+      let k = length knownSuffix in
+      let plaintextLength = blockSize - (k `mod` blockSize) - 1 in
+      let blockIndex = (plaintextLength + k) `div` blockSize in
+      let plaintext = replicate plaintextLength 0 in
+      let prefix = drop (blockIndex * blockSize) (plaintext ++ knownSuffix) in
+      let dict = mkDictionary blockSize prefix encrypt in
+      let ciphertextBlock = chunks blockSize (encrypt plaintext) !! blockIndex in
+      let discoveredSuffixChar = dict Map.! ciphertextBlock in
+      go' (knownSuffix ++ [discoveredSuffixChar])
+
+{-
+
+How @go'@ above works
+=====================
+
+We want to choose a plaintext which has the effect of pushing the
+first unknown char @c@ of the secret suffix to a (known) right block
+boundary. Let the (zero-based) index of the known block be @b@. Then the
+@b@th block of plaintext is the last block of
+
+> plaintext ++ knownSuffix ++ [c]
+
+The prefix for our dictionary is hence the last @blockSize - 1@ chars
+of
+
+> plaintext ++ knownSuffix
+
+So, how long is the plaintext, and what is @b@? We need
+
+> length plaintext + length knownSuffix `mod` blockSize == blockSize - 1
+
+so taking @plaintext@ of minimal length with this property, we have
+
+> length plaintext = blockSize - (length knownSuffix `mod` blockSize) - 1
+
+and the block index @b@ is
+
+> length (plaintext ++ knownSuffix) `div` blockSize
+
+-}
 
 ----------------------------------------------------------------
 
-prop_discoverBlockSizeCorrect :: QC.Property
-prop_discoverBlockSizeCorrect =
+prop_discoverBlockAndSuffixSize_correct :: QC.Property
+prop_discoverBlockAndSuffixSize_correct =
   QC.forAll QC.arbitrary $ \(QC.Positive blockSize) ->
-    QC.collect ("blocksize", blockSize) $
-    discoverBlockSize (pkcs7Pad blockSize) == blockSize
+    QC.forAll QC.arbitrary $ \(QC.Positive succSuffixSize) ->
+      let suffixSize = succSuffixSize - 1 in
+      let suffix = replicate suffixSize 0 in
+      let encrypt = pkcs7Pad blockSize . (++ suffix) in
+      -- QC.collect ("(blocksize, suffixSize)", (blockSize, suffixSize)) $
+      discoverBlockAndSuffixSize encrypt == (blockSize, suffixSize)
+
+prop_breakEcbSuffix_correct :: QC.Property
+prop_breakEcbSuffix_correct =
+  QC.forAll QC.arbitrary $ \(QC.Positive blockSize) ->
+    QC.forAll QC.arbitrary $ \suffix ->
+      -- TODO: Block size of 1 causes problems.
+      let encrypt = pkcs7Pad blockSize . (++ suffix) in
+      breakEcbSuffix encrypt == suffix
+
+-- | Test that 'breakEcbSuffix' discovers the right suffix and show it
+-- (surprise, it's Vanilla Ice lyrics).
+discoverSecretSuffix :: IO ()
+discoverSecretSuffix = do
+  let suffix = breakEcbSuffix ecbEncryptionOracle
+  assert "Suffix correct" (suffix == secretSuffix) $
+    printf "Secret suffix: %s\n" (rawToString suffix)
 
 main :: IO ()
 main = do
-  QC.quickCheck prop_discoverBlockSizeCorrect
+  QC.quickCheck prop_discoverBlockAndSuffixSize_correct
+  QC.quickCheck prop_breakEcbSuffix_correct
+  discoverSecretSuffix
