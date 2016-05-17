@@ -42,3 +42,5 @@ functions in the 'Set1.C*' modules.
 or, i could start implementing all "useful" functions in separate, non
 'Set*.C*' modules, and then import them into the 'Set*.C*' modules
 which would now only include tests.
+* TODO [#A] figure out how to test a single boolean in QuickCheck
+see C13.hs for the wrong way :P
