@@ -120,15 +120,19 @@ mkDictionary blockSize prefix encrypt =
   Map.fromList [ (take blockSize $ encrypt (prefix++[k]), k)
                | k <- [minBound..maxBound] ]
 
--- | Learn ECB suffix length by growing prependend plaintext until a
--- block boundary is reached. Assuming PKCS#7 padding is used, the
--- number of blocks will increase by one when the suffix aligns with a
--- block boundary. If the number of blocks at this point is k, and the
--- plaintext length is p, then suffix length is
+-- | Learn ECB secret text length by growing prependend plaintext
+-- until a block boundary is reached. Assuming PKCS#7 padding is used,
+-- the number of blocks will increase by one when the suffix aligns
+-- with a block boundary. If the number of blocks at this point is k,
+-- and the plaintext length is p, then secret text length is
 --
 -- > (k-1) * blockSize - p
-discoverBlockAndSuffixSize :: (Raw -> Raw) -> (Int, Int)
-discoverBlockAndSuffixSize encrypt = go 0
+--
+-- Here "secret text" is some fixed length text which is added to the
+-- attacker-supplied plaintext, in front, in back, in the middle, or
+-- any combination or these.
+discoverBlockAndSecretSize :: (Raw -> Raw) -> (Int, Int)
+discoverBlockAndSecretSize encrypt = go 0
   where
   go p =
     let plaintext = replicate p 0 in
@@ -147,7 +151,7 @@ discoverBlockAndSuffixSize encrypt = go 0
 -- encryption oracle.
 breakEcbSuffix :: (Raw -> Raw) -> Raw
 breakEcbSuffix encrypt =
-  let (blockSize, suffixSize) = discoverBlockAndSuffixSize encrypt in
+  let (blockSize, suffixSize) = discoverBlockAndSecretSize encrypt in
   let (plaintext, detectEcb) = mkDetectEcb blockSize in
   if not $ detectEcb (encrypt plaintext) then
     error "breakEcb: not ECB!"
@@ -210,12 +214,14 @@ and the block index @b@ is
 prop_discoverBlockAndSuffixSize_correct :: QC.Property
 prop_discoverBlockAndSuffixSize_correct =
   QC.forAll QC.arbitrary $ \(QC.Positive blockSize) ->
-    QC.forAll QC.arbitrary $ \(QC.Positive succSuffixSize) ->
-      let suffixSize = succSuffixSize - 1 in
+    QC.forAll QC.arbitrary $ \(QC.NonNegative suffixSize) ->
+    QC.forAll QC.arbitrary $ \(QC.NonNegative prefixSize) ->
+      let prefix = replicate prefixSize 0 in
       let suffix = replicate suffixSize 0 in
-      let encrypt = pkcs7Pad blockSize . (++ suffix) in
+      let encrypt = pkcs7Pad blockSize . (prefix ++) . (++ suffix) in
       -- QC.collect ("(blocksize, suffixSize)", (blockSize, suffixSize)) $
-      discoverBlockAndSuffixSize encrypt == (blockSize, suffixSize)
+      discoverBlockAndSecretSize encrypt ==
+        (blockSize, prefixSize + suffixSize)
 
 prop_breakEcbSuffix_correct :: QC.Property
 prop_breakEcbSuffix_correct =
