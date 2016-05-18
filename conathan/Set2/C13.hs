@@ -152,15 +152,13 @@ prop_createAdminProfile_correct :: QC.Property
 prop_createAdminProfile_correct =
   let encoded = decryptProfile createAdminProfile in
   let kvs = parseProfile encoded in
-  (
-   encoded == encodeKeyValuePairs kvs &&
-   length (filter ((== "role") . fst) kvs) == 1 &&
-   lookup "role" kvs == Just "admin"
-  ) QC.=== True
+  QC.once $
+  encoded == encodeKeyValuePairs kvs &&
+  length (filter ((== "role") . fst) kvs) == 1 &&
+  lookup "role" kvs == Just "admin"
 
 main :: IO ()
 main = do
   QC.quickCheck prop_parseProfile_roundTrip
   QC.quickCheck prop_encryptDecrypt_roundTrip
-  QC.quickCheckWith (QC.stdArgs { QC.maxSuccess = 1 })
-    prop_createAdminProfile_correct
+  QC.quickCheck prop_createAdminProfile_correct

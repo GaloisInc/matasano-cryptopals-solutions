@@ -3,7 +3,11 @@ e.g.
 #+BEGIN_QUOTE
 pandoc http://cryptopals.com/sets/2/challenges/12 --to markdown
 #+END_QUOTE
-* TODO [#B] profile C4 (or C3) and make it faster
+* TODO [#B] profile slow solutions and make them faster
+- C3
+- C4
+- C12
+- C14
 * TODO try using a bit-vector library for bit manipulation in C1
 * TODO [#B] try using parallelism to solve keys
 - singleCharXors
@@ -34,13 +38,20 @@ A scoring function that does not penalize longer keys can't
 distinguish repeated correct key from minimal correct key, but that's
 a minor concern.
 * TODO [#B] update base-64 *encoding* to handle inputs which aren't a multiple of 3 bytes
-* TODO [#B] add quickcheck tests for encoding and decoding in C1
-* TODO [#B] rethink module strategy
+* TODO [#C] rethink module strategy
 e.g., i could create a 'Set1' module which exports all of the
 functions in the 'Set1.C*' modules.
 
 or, i could start implementing all "useful" functions in separate, non
 'Set*.C*' modules, and then import them into the 'Set*.C*' modules
 which would now only include tests.
-* TODO [#A] figure out how to test a single boolean in QuickCheck
+* DONE [#A] figure out how to test a single boolean in QuickCheck
 see C13.hs for the wrong way :P
+
+UPDATE: can use 'QC.once' or 'QC.property' with a boolean argument in
+the property definition. when using 'QC.property', it still says that
+100 tests were performed, but the definition of the 'Testable' class,
+of which 'property' is the injection method, says that 'Bool' is
+"exhaustive", which I took to mean that only one test is needed. In
+any case, using 'once' also injects 'Bool' into 'Property', and only
+runs the test once.
