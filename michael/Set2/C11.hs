@@ -3,7 +3,6 @@ module Set2.C11 where
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Random
-import Data.List ( tails )
 import Data.List.Split ( chunksOf )
 import System.Random
 import qualified Test.QuickCheck as QC
@@ -33,7 +32,6 @@ runTests = do
 
 main :: IO ()
 main = do
-  -- setStdGen . snd =<< runRandT randMain =<< getStdGen
   g <- getStdGen
   let enc bs = evalRand (randomEnc bs) g
   putStrLn $ "containsRepeat says: " ++ show (containsRepeat enc)
