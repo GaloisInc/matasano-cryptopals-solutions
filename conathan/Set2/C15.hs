@@ -25,7 +25,7 @@ make your function throw an exception on bad padding.
 Crypto nerds know where we're going with this. Bear with us.
 
 -}
-module Set1.C15 where
+module Set2.C15 where
 
 import qualified Test.QuickCheck as QC
 
