@@ -43,6 +43,9 @@ pkcs7Pad blockSize plaintext = plaintext <> replicate padValue padValue
   padValue = fromIntegral $ blockSize - (length plaintext `mod` blockSize)
 
 -- | Assumes input is the output of 'pkcs7Pad' and hence is non-empty.
+--
+-- See 'Set2.C15.pkcs7SafeUnpad' for a version that verifies the
+-- padding.
 pkcs7Unpad :: Raw -> Raw
 pkcs7Unpad [] = error "pkcs7Unpad: empty input!"
 pkcs7Unpad plaintext =
