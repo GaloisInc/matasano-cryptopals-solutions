@@ -39,7 +39,8 @@ import Set2.C9 ( pkcs7Pad, pkcs7Unpad )
 -- See 'Set2.C9.pkcs7Unpad' for a simpler, less paranoid version.
 pkcs7SafeUnpad :: Int -> Raw -> Maybe Raw
 pkcs7SafeUnpad blockSize plaintext =
-  assert "pkcs7Unpad: plaintext length is positive and multiple of block size."
+  assert
+    (printf "pkcs7Unpad: plaintext length (%i) is positive and multiple of block size (%i)" (length plaintext) blockSize)
     ((length plaintext `mod` blockSize == 0) &&
      (length plaintext > 0))
     plaintext'
