@@ -49,7 +49,7 @@ profile.
 
 -}
 
-module Set2.C13 where
+module Set2.C13 () where
 
 import qualified Data.List.Split as S
 import qualified Test.QuickCheck as QC

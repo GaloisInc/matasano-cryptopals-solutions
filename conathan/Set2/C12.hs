@@ -77,7 +77,12 @@ makes everything clear, but the words before that are unclear.
 
 -}
 
-module Set2.C12 where
+module Set2.C12
+  ( breakEcbSuffix
+  , discoverBlockAndSecretSize
+  , secretKey
+  , secretSuffix
+  ) where
 
 import Data.Map.Strict ( Map )
 import qualified Data.Map.Strict as Map

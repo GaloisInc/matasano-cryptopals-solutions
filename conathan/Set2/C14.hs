@@ -54,7 +54,7 @@ which only appends a secret suffix, as in C12.
 
 -}
 
-module Set2.C14 where
+module Set2.C14 () where
 
 import Data.Map.Strict ( Map )
 import qualified Data.Map.Strict as Map
