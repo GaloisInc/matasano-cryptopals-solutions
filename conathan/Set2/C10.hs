@@ -48,16 +48,25 @@ import Common
 import Set1
 import Set2.C9 hiding ( main )
 
--- | Does *not* assume the plaintext is padded.
+-- | Assumes the plaintext is multiple of the block size.
+--
+-- Caller should use 'pkcs7Pad' to pad the input first if necessary.
 cbcEncrypt :: Int -> Raw -> (Raw -> Raw) -> (Raw -> Raw)
-cbcEncrypt blockSize iv encrypt plaintext = ciphertext
+cbcEncrypt blockSize iv encrypt plaintext
+  | length plaintext `mod` blockSize /= 0
+  = error $ "cbcEncrypt: msg size not a multiple of block size: " ++
+            "did you forget to pad?"
+  | otherwise = ciphertext
   where
-  paddedChunks = chunks blockSize (pkcs7Pad blockSize plaintext)
+  chunks_ = chunks blockSize plaintext
   -- Encryption is not parallelizable.
-  ciphertext = concat . tail $ scanl' xorAndEncrypt iv paddedChunks
+  ciphertext = concat . tail $ scanl' xorAndEncrypt iv chunks_
   c `xorAndEncrypt` p = encrypt $ zipWith xor c p
 
--- | Does not assume the plaintext was padded and removes padding.
+-- | Does *not* remove padding.
+--
+-- Call should use 'pkcs7Unpad' or 'pkcs7SafeUnpad' to remove padding,
+-- if necessary.
 cbcDecrypt :: Int -> Raw -> (Raw -> Raw) -> (Raw -> Raw)
 cbcDecrypt blockSize iv decrypt ciphertext = plaintext
   where
@@ -65,7 +74,7 @@ cbcDecrypt blockSize iv decrypt ciphertext = plaintext
   -- Decryption is parallelizable.
   xoredPlaintexts = map decrypt ciphertexts
   plaintexts = zipWith (zipWith xor) xoredPlaintexts ([iv]++ciphertexts)
-  plaintext = pkcs7Unpad $ concat plaintexts
+  plaintext = concat plaintexts
 
 ----------------------------------------------------------------
 
@@ -74,8 +83,11 @@ prop_cbc_aes128_encrypt_decrypt_roundtrip =
     QC.forAll (QC.vector blockSize) $ \key ->
       QC.forAll QC.arbitrary $ \plaintext ->
         QC.collect ("num blocks", length plaintext `div` blockSize) $
-        let ciphertext = cbcEncrypt blockSize iv (aes128EcbEncrypt key) plaintext
-            plaintext' = cbcDecrypt blockSize iv (aes128EcbDecrypt key) ciphertext
+        let paddedPlaintext = pkcs7Pad blockSize plaintext
+            ciphertext =
+              cbcEncrypt blockSize iv (aes128EcbEncrypt key)paddedPlaintext
+            plaintext' = pkcs7Unpad $
+              cbcDecrypt blockSize iv (aes128EcbDecrypt key) ciphertext
         in
         plaintext == plaintext'
   where

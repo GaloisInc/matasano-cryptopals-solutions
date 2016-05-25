@@ -56,7 +56,7 @@ encryptionOracle plaintext = do
   (prePad :: Raw)        <- replicateM prePadLength R.randomIO
   (postPadLength :: Int) <- R.randomRIO (5, 10)
   (postPad :: Raw)       <- replicateM postPadLength R.randomIO
-  let paddedPlaintext = prePad ++ plaintext ++ postPad
+  let paddedPlaintext = pkcs7Pad 16 $ prePad ++ plaintext ++ postPad
 
   (iv :: Raw)  <- replicateM 16 R.randomIO
   (key :: Raw) <- replicateM 16 R.randomIO
@@ -64,7 +64,7 @@ encryptionOracle plaintext = do
   let cipherText =
         if useEcb then
           -- Pad here to ensure plaintext is multiple of block length.
-          aes128EcbEncrypt key (pkcs7Pad 16 paddedPlaintext)
+          aes128EcbEncrypt key paddedPlaintext
         else
           cbcEncrypt 16 iv (aes128EcbEncrypt key) paddedPlaintext
   return (cipherText, useEcb)
