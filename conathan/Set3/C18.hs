@@ -1,35 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-
-<div class="container">
-
-<div class="row">
-
-<div class="col-md-12">
-
-### [the cryptopals crypto challenges](/)
-
-</div>
-
-</div>
-
-<div class="row">
-
-<div class="col-md-12">
-
--   [Challenges](/)
--   [Set 3](/sets/3)
--   [Challenge 18](/sets/3/challenges/18)
-
-</div>
-
-</div>
-
-<div class="row">
-
-<div class="col-md-2">
-
-</div>
-
-<div class="col-md-10">
 
 ### Implement CTR, the stream cipher mode
 
@@ -76,15 +46,7 @@ and recover the plaintext.
 Decrypt the string at the top of this function, then use your CTR
 function to encrypt and decrypt other things.
 
-<div class="panel panel-warning">
-
-<div class="panel-heading">
-
 ### This is the only block cipher mode that matters in good code. {.panel-title}
-
-</div>
-
-<div class="panel-body">
 
 Most modern cryptography relies on CTR mode to adapt block ciphers into
 stream ciphers, because most of what we want to encrypt is better
@@ -93,22 +55,63 @@ once quipped to Phil Rogaway that good cryptosystems don't need the
 "decrypt" transforms. Constructions like CTR are what he was talking
 about.
 
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<div style="text-align:center">
-
-[Cryptography Services](https://cryptoservices.github.io/) | [NCC
-Group](https://www.nccgroup.trust/us/)
-
-</div>
 -}
 
 module Set3.C18 () where
+
+import qualified Test.QuickCheck as QC
+
+import Common
+import Set1
+import Set2
+
+ctrMode :: Int -> Word64 -> (Raw -> Raw) -> (Raw -> Raw)
+ctrMode blockSize nonce hash plaintext = ciphertext
+  where
+  -- We the plaintext length a multiple of the block size (using
+  -- padding), so that we have full-size chunks to pass to the
+  -- underlying hash.
+  blocks = chunks blockSize (pkcs7Pad blockSize plaintext)
+  ctrs =
+    [ littleEndianBytes nonce ++ littleEndianBytes i | i <- [(0::Word64)..] ]
+  ciphertexts = [ xors (hash ctr) block | (ctr, block) <- zip ctrs blocks ]
+  ciphertext = take (length plaintext) $ concat ciphertexts
+
+-- This probably would have been useful in C1
+littleEndianBytes :: (Integral i, FiniteBits i) => i -> [Word8]
+littleEndianBytes x = assertBitSizeMultipleOf8 $ bytes
+  where
+  bits = map (testBit x) [0 .. finiteBitSize x - 1]
+  bytes = map mkByte (chunks 8 bits)
+
+  assertBitSizeMultipleOf8 = assert
+    ("littleEndianBytes: number bits not a multiple of 8: " ++
+     show (finiteBitSize x))
+    (finiteBitSize x `mod` 8 == 0)
+
+  -- Make byte from *little endian* bits.
+  mkByte :: [Bool] -> Word8
+  mkByte [] = 0
+  mkByte (b:bs) = (if b then 1 else 0) + 2 * mkByte bs
+
+----------------------------------------------------------------
+
+prop_littleEndianBytes_correct :: QC.Property
+prop_littleEndianBytes_correct =
+  QC.forAll QC.arbitrary $ \(x :: Word64) ->
+    collapse (littleEndianBytes x) == x
+  where
+  collapse [] = 0
+  collapse (b:bs) = fromIntegral b + 256 * collapse bs
+
+main :: IO ()
+main = do
+  QC.quickCheck prop_littleEndianBytes_correct
+  printf "Decrypted example:\n%s\n" (rawToString decryptedExample)
+  where
+  decryptedExample = ctrMode 16 0 (aes128EcbEncrypt key) ciphertext
+
+  key = stringToRaw "YELLOW SUBMARINE"
+
+  ciphertext =
+    base64ToRaw "L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=="

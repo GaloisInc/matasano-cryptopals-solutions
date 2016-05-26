@@ -6,6 +6,11 @@ import Set1.C1 hiding ( main )
 fixedXor :: [Char] -> [Char] -> [Char]
 fixedXor x y = rawToBase16 (zipWith xor (base16ToRaw x) (base16ToRaw y))
 
+-- | I've used this function many times (as of C17), so define it with
+-- a shorter name.
+xors :: Bits a => [a] -> [a] -> [a]
+xors = zipWith xor
+
 main :: IO ()
 main = printf "Test 1 passed? %s!\n" (if test (tests !! 0) then "Yes" else "No")
   where
