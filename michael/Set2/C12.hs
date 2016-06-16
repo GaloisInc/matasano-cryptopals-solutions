@@ -19,6 +19,10 @@ randomECB g bs = do
   let key = take 16 (randoms g)
    in myECBEncrypt' key (bs ++ footer)
 
+-- This function applies the encryption function to a successively longer
+-- list of 0's, then checks when the ciphertext length jumps up a block.
+-- The jump in size tells us the block size, and from that (and the length
+-- of our input message) we can find the footer length.
 discoverBlockSizeAndFooterLength :: ([Byte] -> [Byte]) -> (Int,Int)
 discoverBlockSizeAndFooterLength enc = go $ zip lengths [0..]
   where
