@@ -7,6 +7,7 @@ import qualified Test.QuickCheck as QC
 
 import Set1
 import Set2.C9 hiding ( main )
+import Set2.Helpers
 
 
 aes128BlockLen :: Int
@@ -34,9 +35,6 @@ myCBCDecrypt iv key ciphertext = pkcs_7Unpad paddedPlaintext
   decChunks = map ecbDec chunks
   ecbDec = myECBDecrypt key
   paddedPlaintext = concat (zipWith (xor') decChunks (iv:chunks))
-
-xor' :: [Byte] -> [Byte] -> [Byte]
-xor' = zipWith (xor)
 
 runTests :: IO ()
 runTests = do
