@@ -8,12 +8,18 @@ import System.Random
 
 import Set1 hiding ( key )
 import Set2.C10 hiding ( main )
+import Set2.Helpers
 
 
 {-
 
-AES-128-ECB(prefix || attacker-controlled || suffix, random-key)
-Goal: Change suffix.
+AES-128-CBC(prefix || attacker-controlled || suffix, random-key)
+Goal: Insert the (unescaped) string "admin=true;" into the decryption, by
+modifying the ciphertext.
+
+This is totally nuts! It seems that if you know what parts of the ciphertext
+you can control, then you can just insert crap into that part of the message!
+WAT!?!?!?!?!
 
 -}
 
@@ -40,6 +46,38 @@ encode str = myCBCEncrypt iv key (unasciify (header ++ escape str ++ footer))
 decode :: [Byte] -> String
 decode = asciify . myCBCDecrypt iv key
 
+{-
+This is where the magic happens. I insert a null message for simplicity, but the message
+could be anything. I know that whatever transformation I apply to the ciphertext block
+will get applied to the plaintext block following the ciphertext block I tamper with
+(due to the xor in CBC mode). Thus I apply the transformation of xor with my "goal"
+block. Since I control the blocks in the middle I know what they will xor against, so
+by applying the right transformation I can create the block I desire. Nutso!!
+-}
+nullCharBlock = replicate 16 '0'
+nullBlock  = unasciify nullCharBlock
+adminBlock = unasciify ";admin=true;x=yy"
+
+blockMask :: [Byte]
+blockMask = xor' nullBlock adminBlock
+
+cipherBlocks :: [[Byte]]
+cipherBlocks = chunksOf 16 (encode (nullCharBlock ++ nullCharBlock))
+
+tamperedBlocks :: [[Byte]]
+tamperedBlocks = take 2 cipherBlocks
+              ++ [ xor' blockMask (cipherBlocks !! 2) ]
+              ++ drop 3 cipherBlocks
+
+isCorrect :: Bool
+isCorrect = isAdmin $ decode $ concat tamperedBlocks
+
 main :: IO ()
-main = do
-  return ()
+main =
+  putStrLn $ "Is correct? " ++ affirmate isCorrect
+
+
+-- Helpers!
+printBlocks :: Show a => [a] -> IO ()
+printBlocks = mapM_ print . chunksOf 16
+
