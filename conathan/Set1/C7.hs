@@ -43,6 +43,9 @@ import Turtle.Prelude ( shellStrict )
 import Common
 import Set1.C1 hiding ( main )
 
+aesBlockSize :: Num a => a
+aesBlockSize = 16
+
 -- Might be silly to make this take 'Raw' inputs, since we just
 -- convert back to String.
 aes128EcbDecryptOpenSsl :: Raw -> Base64 -> IO String
@@ -86,9 +89,9 @@ aes128EcbDecrypt key ciphertext =
 ----------------------------------------------------------------
 
 prop_aes128_roundtrip =
-  QC.forAll (QC.vector 16) $ \key ->
+  QC.forAll (QC.vector aesBlockSize) $ \key ->
     QC.forAll QC.arbitrary $ \(QC.Positive numBlocks) ->
-      QC.forAll (QC.vector (16 * numBlocks)) $ \plaintext ->
+      QC.forAll (QC.vector (aesBlockSize * numBlocks)) $ \plaintext ->
         QC.collect ("numBlocks", numBlocks) $
         plaintext == aes128EcbDecrypt key (aes128EcbEncrypt key plaintext)
 

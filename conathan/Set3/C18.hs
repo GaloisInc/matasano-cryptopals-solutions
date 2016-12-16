@@ -57,7 +57,7 @@ about.
 
 -}
 
-module Set3.C18 () where
+module Set3.C18 ( ctrMode ) where
 
 import qualified Test.QuickCheck as QC
 
