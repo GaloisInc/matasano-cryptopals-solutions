@@ -37,7 +37,7 @@ traceId' prefix x = trace (prefix++show x) x
 -- I'm on the plane and I don't remember how Haskell's native
 -- assertions work.
 --
--- UPDATE: @Control.Exception.assert :: Bool -> a -> a@. Is disabled
+-- UPDATE: @Control.Exception.assert :: Bool -> a -> a@ is disabled
 -- when compiling with optimization, or with @-fignore-asserts@.
 assert :: String -> Bool -> a -> a
 assert msg condition x | condition = x

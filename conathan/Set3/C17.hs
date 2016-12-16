@@ -153,26 +153,32 @@ cbcPaddingOracleAttack blockSize paddingOracle iv ciphertext = plaintext
       --
       -- where
       --
-      -- > Decrypt (C_{n+1)) =
+      -- > Decrypt (C_{n+1)) = P_{n+1} `xor` C_n
       --
       -- Now we control the cipher text, so we replace C_n with C'_n,
       -- where C'_n is chosen so that
       --
       -- > (P_{n+1} `xor` C_n) `xor` C'_n
       --
-      -- has valid padding, and so that we choose the pad-byte value.
+      -- has valid padding, for a pad-byte value of our choice.
       --
       -- Why does this help? Well, if
       --
       -- > (P_{n+1} `xor` C_n) `xor` C'_n
       --
-      -- has valid padding, then we know the last pad-byte values of
-      -- that expression are all equal to the pad byte. Hence
+      -- has valid padding, then we know the last pad-byte-many bytes
+      -- of that expression are all equal to the pad byte. Hence by
+      -- xor-ing on both sides, we have
       --
-      -- > final-pad-byte-bytes P_{n+1) = final-pad-byte-bytes (C'_n `xor` C'_n)
+      -- > final-pad-byte-many-bytes-of P_{n+1) =
+      -- >   pad-byte-many-copies-of-pad-byte `xor`
+      -- >   final-pad-byte-many-bytes-of (C_n `xor` C'_n)
       --
-      -- and when the pad byte is chosen equal to the block size, then
-      -- we know the entire plaintext block!
+      --
+      -- We know all of the values on the RHS, so we know
+      -- pad-byte-many bytes of the plaintext. When the pad byte is
+      -- chosen equal to the block size, then we know the entire
+      -- plaintext block!
       --
       -- So, how do we do this so we know the padding? Well, first
       -- choose C'_n s.t. the pad-byte is equal to 1, which teaches us
@@ -181,6 +187,10 @@ cbcPaddingOracleAttack blockSize paddingOracle iv ciphertext = plaintext
       -- us the second to last byte of the plaintext. In each case, we
       -- just blindly xor the unknown byte with all 256 possible
       -- bytes, until the padding oracle tells us we choose correctly.
+      -- (Pitfall: in the base case where we are trying to set the
+      -- pad-byte to 1, we need to check that we didn't simply get
+      -- lucky and produce valid padding for a different value! See
+      -- use of @perturb@ below.)
       --
       -- Below, we use @c_0@ and @c_1@ for C_n and C_{n+1}, and define
       --
@@ -188,13 +198,13 @@ cbcPaddingOracleAttack blockSize paddingOracle iv ciphertext = plaintext
       --
       -- where @k@ is the guessed byte which results in the pad byte
       -- we want.
-      delta k = zipWith xor
+      delta k = xors
         (zeroExtend blockSize knownBytes)
         (zeroExtend blockSize $ ([k] ++ replicate (length knownBytes) padByte))
-      c_0' k = zipWith xor c_0 (delta k)
+      c_0' k = c_0 `xors` delta k
       -- Change the second to last byte of a block-sized chunk of
       -- bytes.
-      perturb bytes = zipWith xor bytes (zeroExtend blockSize [1,0])
+      perturb bytes = bytes `xors` zeroExtend blockSize [1,0]
       learnByte k =
         if paddingOracle (c_0' k) c_1 &&
            -- If we don't know any bytes of this block yet, then it's

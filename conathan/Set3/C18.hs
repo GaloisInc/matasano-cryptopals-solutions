@@ -68,9 +68,10 @@ import Set2
 ctrMode :: Int -> Word64 -> (Raw -> Raw) -> (Raw -> Raw)
 ctrMode blockSize nonce hash plaintext = ciphertext
   where
-  -- We the plaintext length a multiple of the block size (using
-  -- padding), so that we have full-size chunks to pass to the
-  -- underlying hash.
+  -- We make the plaintext length a multiple of the block size (using
+  -- padding), so that we don't have to treat the last block
+  -- specially. We then truncate the ciphertext at the end, back down
+  -- to the original size of the plaintext.
   blocks = chunks blockSize (pkcs7Pad blockSize plaintext)
   ctrs =
     [ littleEndianBytes nonce ++ littleEndianBytes i | i <- [(0::Word64)..] ]
