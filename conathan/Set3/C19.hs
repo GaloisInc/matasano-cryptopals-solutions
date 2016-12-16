@@ -1,35 +1,4 @@
 {-
-<div class="container">
-
-<div class="row">
-
-<div class="col-md-12">
-
-### [the cryptopals crypto challenges](/)
-
-</div>
-
-</div>
-
-<div class="row">
-
-<div class="col-md-12">
-
--   [Challenges](/)
--   [Set 3](/sets/3)
--   [Challenge 19](/sets/3/challenges/19)
-
-</div>
-
-</div>
-
-<div class="row">
-
-<div class="col-md-2">
-
-</div>
-
-<div class="col-md-10">
 
 ### Break fixed-nonce CTR mode using substitutions
 
@@ -103,35 +72,11 @@ Attack this cryptosystem piecemeal: guess letters, use expected English
 language frequence to validate guesses, catch common English trigrams,
 and so on.
 
-<div class="panel panel-warning">
-
-<div class="panel-heading">
-
 ### Don't overthink it. {.panel-title}
-
-</div>
-
-<div class="panel-body">
 
 Points for automating this, but part of the reason I'm having you do
 this is that I think this approach is suboptimal.
 
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<div style="text-align:center">
-
-[Cryptography Services](https://cryptoservices.github.io/) | [NCC
-Group](https://www.nccgroup.trust/us/)
-
-</div>
 -}
 
 module Set3.C19 () where
