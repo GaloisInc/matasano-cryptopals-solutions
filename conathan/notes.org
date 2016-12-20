@@ -1,4 +1,4 @@
-* convert descriptions to markdown using pandoc
+* converting descriptions to markdown using pandoc
 e.g.
 #+BEGIN_QUOTE
 pandoc http://cryptopals.com/sets/2/challenges/12 --to markdown

@@ -1,35 +1,4 @@
 {-
-<div class="container">
-
-<div class="row">
-
-<div class="col-md-12">
-
-### [the cryptopals crypto challenges](/)
-
-</div>
-
-</div>
-
-<div class="row">
-
-<div class="col-md-12">
-
--   [Challenges](/)
--   [Set 3](/sets/3)
--   [Challenge 20](/sets/3/challenges/20)
-
-</div>
-
-</div>
-
-<div class="row">
-
-<div class="col-md-2">
-
-</div>
-
-<div class="col-md-10">
 
 ### Break fixed-nonce CTR statistically
 
@@ -49,18 +18,51 @@ to a common length (the length of the smallest ciphertext will work).
 Solve the resulting concatenation of ciphertexts as if for repeating-
 key XOR, with a key size of the length of the ciphertext you XOR'd.
 
-</div>
-
-</div>
-
-</div>
-
-<div style="text-align:center">
-
-[Cryptography Services](https://cryptoservices.github.io/) | [NCC
-Group](https://www.nccgroup.trust/us/)
-
-</div>
 -}
 
 module Set3.C20 () where
+
+import Data.List ( group )
+
+import Common
+import Set1
+import Set2
+import Set3.C19
+
+mode :: (Ord a, Eq a) => [a] -> a
+mode xs =
+  snd . head . reverse . sort $ [ (length g, head g) | g <- groups ]
+  where
+  groups = group . sort $ xs
+
+solveUsingC19 :: [Base64] -> IO ()
+solveUsingC19 plainTexts = do
+  print key
+  -- solveRepeatedNonceCtrMode key rawCipherTexts
+  where
+    guesses = map (guessKeyByte englishLikeness) rawCipherTextColumns
+    key = [ k | (_score, k, _decryption) <- map head guesses ]
+    rawCipherTextColumns = transpose rawCipherTexts
+    rawCipherTexts = map encryptC19 plainTexts
+
+solveUsingC6 :: [Base64] -> IO ()
+solveUsingC6 plainTexts = do
+  let (score, key, plainText) = head $
+        solveMultiCharXor englishLikeness [minLen] cipherText
+  print $ stringToRaw key
+  mapM_ putStrLn $ chunks minLen plainText
+  where
+  cipherTexts = map encryptC19 plainTexts
+  minLen = minimum . map length $ cipherTexts
+  cipherText = concat . map (take minLen) $ cipherTexts
+
+mainUsingC6 :: IO ()
+mainUsingC6 = solveUsingC6 =<< plainTextsC20
+
+mainUsingC19 :: IO ()
+mainUsingC19 = solveUsingC19 =<< plainTextsC20
+
+plainTextsC20 :: IO [Base64]
+plainTextsC20 = do
+  lines <$> readFile "Set3/20.txt"
+
