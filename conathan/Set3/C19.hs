@@ -79,6 +79,54 @@ this is that I think this approach is suboptimal.
 
 -}
 
+{- Solution output from 'main':
+
+00000000001111111111222222222233333333334
+01234567890123456789012345678901234567890
+I have met them at close of day
+Coming with vivid faces
+From counter or desk among grey
+Eighteenth-century houses.
+I have passed with a nod of the head
+Or polite meaningless words,
+Or have lingered awhile and said
+Polite meaningless words,
+And thought before I had done
+Of a mocking tale or a gibe
+To please a companion
+Around the fire at the club,
+Being certain that they and I
+But lived where motley is worn:
+All changed, changed utterly:
+A terrible beauty is born.
+That woman's days were spent
+In ignorant good will,
+Her nights in argument
+Until her voice grew shrill.
+What voice more sweet than hers
+When young and beautiful,
+She rode to harriers?
+This man had kept a school
+And rode our winged horse.
+This other his helper and friend
+Was coming into his force;
+He might have won fame in the end,
+So sensitive his nature seemed,
+So daring and sweet his thought.
+This other man I had dreamed
+A drunken, vain-glorious lout.
+He had done most bitter wrong
+To some who are near my heart,
+Yet I number him in the song;
+He, too, has resigned his part
+In the casual comedy;
+He, too, has been changed in his turn,
+Transformed utterly:
+A terrible beauty is born.
+
+-}
+
+
 module Set3.C19 () where
 
 import Common
@@ -86,16 +134,50 @@ import Set1
 import Set2
 import Set3.C18 ( ctrMode )
 
+main :: IO ()
+main = decrypt
+
+decrypt :: IO ()
+decrypt = do
+  putStrLn $ concat [ show (i `div` 10) | i <- [0..40] ]
+  putStrLn $ concat [ show (i `mod` 10) | i <- [0..40] ]
+  forM_ rawCipherTexts $ \r -> do
+    -- To focus on the three longer lines that I can't break
+    -- automatically.
+    --
+    --when (length r >= 34) $
+    putStrLn . rawToString $ xors key r
+  where
+    guesses = map guessKeyByte rawCipherTextColumns
+    -- My first simple heuristic worked for the first 28 chars, but
+    -- then started failing as the columns thin out. Adding some
+    -- weight to punctuation, and decreasing the weight for numbers,
+    -- got me up to 33 chars. Only a few lines are longer than this,
+    -- so I solved those manually; knowing the answer is helpful:
+    -- https://www.poetryfoundation.org/resources/learning/core-poems/detail/43289
+    key = take 33 [ k | (_score, k, _decryption) <- map head guesses ]
+          ++ [ 160, 142, 203, 17, 123 ]
+
 -- | Guess key bytes that xor-decrypt the given raw bytes to "English
 -- like" bytes.
 --
 -- The idea is to pass in the columns in 'rawCipherTextColumns'.
-guessKeyByte :: Raw -> [(Word8, String)]
-guessKeyByte col = filter (englishLike . fst)
+guessKeyByte :: Raw -> [(Double, Word8, String)]
+guessKeyByte col = reverse . sort . map (\(k,s) -> (englishLikeness s, k, s)) $
   [ (k, rawToString $ repeat k `xors` col) | k <- [0..255] ]
   where
-  -- Perhaps better to define a score, then a boolean, and sort by score?
-  englishLike _ = error "TODO: look at early exercises for existing functions like this that I've already implemented!"
+  -- Perhaps better to define a score, than a boolean, and sort by score?
+  englishLikeness = sum . map weight
+    -- error "TODO: look at early exercises for existing functions like this that I've already implemented!"
+  weightedProperties =
+    [ ( 1, \c -> isAscii c && not (isControl c) )
+    , ( 1, \c -> isAscii c && isLetter c )
+    , ( 0.2, \c -> isAscii c && isNumber c )
+    , ( 0.5, \c -> isAscii c && isSpace c )
+    -- Punctation that makes sense in prose. Using 0.5 here breaks
+    -- parts of the initial 28 key chars.
+    , ( 0.4, \c -> isAscii c && elem c ".,;:'\"" ) ]
+  weight c = sum [ if p c then w else 0 | (w, p) <- weightedProperties ]
 
 rawCipherTextColumns =
   [ col i rawCipherTexts | i <- [ 0 .. length rawCipherTexts - 1 ] ]
