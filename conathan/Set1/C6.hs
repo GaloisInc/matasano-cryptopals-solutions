@@ -79,22 +79,19 @@ import Set1.C1 hiding ( main )
 import Set1.C3 hiding ( main )
 
 -- Return ranked list of @(score, key, plaintext-for-key)@.
---
--- I made the score a 'Double' so I could normalize, but the
--- underlying score function is per-character, so there isn't really
--- any need to normalize.
-rankMultiCharXors :: Int -> Raw -> [(Double, String, String)]
-rankMultiCharXors keyLen ciphertext = [(score, key, plaintext)]
+rankMultiCharXors ::
+  (String -> Double) -> Int -> Raw -> [(Double, String, String)]
+rankMultiCharXors rank keyLen ciphertext = [(score, key, plaintext)]
   where
   columnCiphertexts = transpose $ chunks keyLen ciphertext
   -- Only consider the best solution for each key charater.
-  columnSolutions :: [(Int, Word8, String)]
-  columnSolutions = map (head . rankSingleCharXors) columnCiphertexts
+  columnSolutions :: [(Double, Word8, String)]
+  columnSolutions = map (head . rankSingleCharXors rank) columnCiphertexts
   plaintext = concat $ transpose
     [ columnPlaintext | (_,_,columnPlaintext) <- columnSolutions ]
   key = rawToString [ columnKeyChar | (_,columnKeyChar,_) <- columnSolutions ]
   score =
-    sum [ fromIntegral columnScore | (columnScore,_,_) <- columnSolutions ]
+    sum [ columnScore | (columnScore,_,_) <- columnSolutions ]
 
 -- Break input into chunks of given size.
 chunks :: Int -> [a] -> [[a]]
@@ -102,14 +99,18 @@ chunks size = takeWhile (not . null) . map (take size) . iterate (drop size)
 
 -- Find best key for all keylengths in given range and return
 -- score-ranked solutions.
-solveMultiCharXor :: [Int] -> Raw -> [(Double, String, String)]
-solveMultiCharXor keyLens raw = reverse . sort $
-  [ head $ trace ("Trying keyLen = "++show keyLen) rankMultiCharXors keyLen raw | keyLen <- keyLens ]
+solveMultiCharXor ::
+  (String -> Double) -> [Int] -> Raw -> [(Double, String, String)]
+solveMultiCharXor rank keyLens raw = reverse . sort $
+  [ head $
+    trace ("Trying keyLen = "++show keyLen)
+    (rankMultiCharXors rank) keyLen raw
+  | keyLen <- keyLens ]
 
 main :: IO ()
 main = do
   ciphertext <- getCiphertext
-  forM_ (take 5 $ solveMultiCharXor [1..100] ciphertext) $ \(score, key, plaintext) ->
+  forM_ (take 5 $ solveMultiCharXor rankC3 [1..100] ciphertext) $ \(score, key, plaintext) ->
     printf "Score = %.2f, key = %s, plaintext =\n%s\n" score key plaintext
   where
   -- Downloaded from the challenge page at

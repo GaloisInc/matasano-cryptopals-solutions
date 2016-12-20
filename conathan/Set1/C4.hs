@@ -39,7 +39,7 @@ main = do
   -- http://cryptopals.com/static/challenge-data/4.txt.
   raws <- map base16ToRaw . lines <$> readFile "Set1/4.txt"
   let rankedAsciis =
-        reverse . sort . concat . map (take 5) . map rankSingleCharXors $ raws
+        reverse . sort . concat . map (take 5) . map (rankSingleCharXors rankC3) $ raws
   forM_ (take 5 $ rankedAsciis) $ \(score, key, ascii) -> do
     printf "Score = %i, key = %i, plaintext =\n%s\n\n"
       score key ascii
