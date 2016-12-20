@@ -126,8 +126,12 @@ A terrible beauty is born.
 
 -}
 
-
-module Set3.C19 () where
+module Set3.C19
+  ( encryptC19
+  , englishLikeness
+  , guessKeyByte
+  , solveRepeatedNonceCtrMode
+  ) where
 
 import Common
 import Set1
@@ -135,20 +139,9 @@ import Set2
 import Set3.C18 ( ctrMode )
 
 main :: IO ()
-main = decrypt
-
-decrypt :: IO ()
-decrypt = do
-  putStrLn $ concat [ show (i `div` 10) | i <- [0..40] ]
-  putStrLn $ concat [ show (i `mod` 10) | i <- [0..40] ]
-  forM_ rawCipherTexts $ \r -> do
-    -- To focus on the three longer lines that I can't break
-    -- automatically.
-    --
-    --when (length r >= 34) $
-    putStrLn . rawToString $ xors key r
+main = solveRepeatedNonceCtrMode key rawCipherTexts
   where
-    guesses = map guessKeyByte rawCipherTextColumns
+    guesses = map (guessKeyByte englishLikeness) rawCipherTextColumns
     -- My first simple heuristic worked for the first 28 chars, but
     -- then started failing as the columns thin out. Adding some
     -- weight to punctuation, and decreasing the weight for numbers,
@@ -157,17 +150,33 @@ decrypt = do
     -- https://www.poetryfoundation.org/resources/learning/core-poems/detail/43289
     key = take 33 [ k | (_score, k, _decryption) <- map head guesses ]
           ++ [ 160, 142, 203, 17, 123 ]
+    rawCipherTextColumns = transpose rawCipherTexts
+    rawCipherTexts = map encryptC19 plainTextsC19
+
+solveRepeatedNonceCtrMode :: Raw -> [Raw] -> IO ()
+solveRepeatedNonceCtrMode key rawCipherTexts = do
+  putStrLn $ concat [ show (i `div` 10) | i <- [0..40] ]
+  putStrLn $ concat [ show (i `mod` 10) | i <- [0..40] ]
+  forM_ rawCipherTexts $ \r -> do
+    -- To focus on the three longer lines that I can't break
+    -- automatically.
+    --
+    --when (length r >= 34) $
+    putStrLn . rawToString $ xors key r
 
 -- | Guess key bytes that xor-decrypt the given raw bytes to "English
 -- like" bytes.
 --
 -- The idea is to pass in the columns in 'rawCipherTextColumns'.
-guessKeyByte :: Raw -> [(Double, Word8, String)]
-guessKeyByte col = reverse . sort . map (\(k,s) -> (englishLikeness s, k, s)) $
+guessKeyByte :: (String -> Double) -> Raw -> [(Double, Word8, String)]
+guessKeyByte rank col = reverse . sort . map (\(k,s) -> (rank s, k, s)) $
   [ (k, rawToString $ repeat k `xors` col) | k <- [0..255] ]
+
+-- | A ranking function which I believe is better than @rankC3@ in
+-- @Set1.C3@.
+englishLikeness :: String -> Double
+englishLikeness = sum . map weight
   where
-  -- Perhaps better to define a score, than a boolean, and sort by score?
-  englishLikeness = sum . map weight
     -- error "TODO: look at early exercises for existing functions like this that I've already implemented!"
   weightedProperties =
     [ ( 1, \c -> isAscii c && not (isControl c) )
@@ -179,21 +188,15 @@ guessKeyByte col = reverse . sort . map (\(k,s) -> (englishLikeness s, k, s)) $
     , ( 0.4, \c -> isAscii c && elem c ".,;:'\"" ) ]
   weight c = sum [ if p c then w else 0 | (w, p) <- weightedProperties ]
 
-rawCipherTextColumns =
-  [ col i rawCipherTexts | i <- [ 0 .. length rawCipherTexts - 1 ] ]
-  where
-  col i xs = concat [ if length x > i then [x !! i] else [] | x <- xs ]
-
-rawCipherTexts :: [Raw]
-rawCipherTexts =
-  map (ctrMode aesBlockSize nonce (aes128EcbEncrypt key) . base64ToRaw)
-  plainTexts
+encryptC19 :: Base64 -> Raw
+encryptC19 =
+  ctrMode aesBlockSize nonce (aes128EcbEncrypt key) . base64ToRaw
   where
   nonce = 0
   key = stringToRaw "YELLOW SUBMARINE"
 
-plainTexts :: [Base64]
-plainTexts =
+plainTextsC19 :: [Base64]
+plainTextsC19 =
   [ "SSBoYXZlIG1ldCB0aGVtIGF0IGNsb3NlIG9mIGRheQ=="
   , "Q29taW5nIHdpdGggdml2aWQgZmFjZXM="
   , "RnJvbSBjb3VudGVyIG9yIGRlc2sgYW1vbmcgZ3JleQ=="
