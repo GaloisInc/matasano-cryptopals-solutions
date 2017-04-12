@@ -1,5 +1,7 @@
-Matasano Crypto Challenges (cryptopals.com)
-===========================================
+Solutions to Matasano CryptoPals Crypto Challenges
+==================================================
 
-Done as professional developement at Galois. These solutions might be
-shared internally.
+The Matasano CryptoPals challenges are available at cryptopals.com.
+
+The solutions here were done as professional developement at
+Galois.
