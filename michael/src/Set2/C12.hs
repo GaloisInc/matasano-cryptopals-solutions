@@ -5,8 +5,8 @@ import System.Random
 
 import Set1
 import Set2.C9 hiding ( main )
-import Set2.C10 hiding ( main, prop_encrypt_decrypt_id, runTests )
-import Set2.C11 hiding ( main, prop_encrypt_decrypt_id )
+import Set2.C10 hiding ( main )
+import Set2.C11 hiding ( main )
 
 footer :: [Byte]
 footer = decodeBase64 "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"

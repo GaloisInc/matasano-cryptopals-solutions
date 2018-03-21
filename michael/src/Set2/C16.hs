@@ -1,10 +1,8 @@
 module Set2.C16 where
 
-import Control.Monad.Identity
 import Data.Char
 import Data.List ( intercalate, delete, isInfixOf )
 import Data.List.Split hiding ( split )
-import System.Random
 
 import Set1 hiding ( key )
 import Set2.C10 hiding ( main )
@@ -68,14 +66,6 @@ tamperedBlocks :: [[Byte]]
 tamperedBlocks = take 2 cipherBlocks
               ++ [ xor' blockMask (cipherBlocks !! 2) ]
               ++ drop 3 cipherBlocks
-
-isCorrect :: Bool
-isCorrect = isAdmin $ decode $ concat tamperedBlocks
-
-main :: IO ()
-main =
-  putStrLn $ "Is correct? " ++ affirmate isCorrect
-
 
 -- Helpers!
 printBlocks :: Show a => [a] -> IO ()

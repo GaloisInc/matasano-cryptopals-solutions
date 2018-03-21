@@ -5,11 +5,10 @@ import Control.Monad.IO.Class
 import Control.Monad.Random
 import Data.List.Split ( chunksOf )
 import System.Random
-import qualified Test.QuickCheck as QC
 
 import Set1
-import Set2.C9 hiding ( main )
-import Set2.C10 hiding ( main, prop_encrypt_decrypt_id, runTests )
+import Set2.C9
+import Set2.C10
 
 -- Padded ECB encryption/decryption
 myECBEncrypt' :: [Byte] -> [Byte] -> [Byte]
@@ -20,15 +19,6 @@ myECBEncrypt' key bs = myECBEncrypt key paddedBs
 
 myECBDecrypt' :: [Byte] -> [Byte] -> [Byte]
 myECBDecrypt' key = pkcs_7Unpad . myECBDecrypt key
-
-prop_encrypt_decrypt_id :: [Byte] -> QC.Property
-prop_encrypt_decrypt_id plaintext =
-  QC.forAll (QC.vector aes128BlockLen) $ \key ->
-    plaintext QC.=== myECBDecrypt' key (myECBEncrypt' key plaintext)
-
-runTests :: IO ()
-runTests = do
-  QC.quickCheckWith QC.stdArgs { QC.maxSuccess = 1000 } prop_encrypt_decrypt_id
 
 main :: IO ()
 main = do

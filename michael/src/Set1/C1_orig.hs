@@ -1,4 +1,4 @@
-module Set1.C1 where
+module Set1.C1_orig where
 
 import Data.Array
 import Data.Char
