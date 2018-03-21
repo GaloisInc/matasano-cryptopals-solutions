@@ -6,8 +6,8 @@ import Crypto.Error
 import qualified Data.ByteString as B
 import System.Exit
 
-import Set1.C1 hiding ( isCorrect )
-import Set1.C5 hiding ( isCorrect,main )
+import Set1.C1
+import Set1.C5 hiding ( main )
 
 keyString = "YELLOW SUBMARINE"
 

@@ -5,9 +5,9 @@ import Data.Bits (popCount,xor)
 import Data.List (sortOn,transpose)
 import Data.List.Split (chunksOf)
 
-import Set1.C1 hiding (isCorrect)
-import Set1.C3 hiding (isCorrect)
-import Set1.C5 hiding (isCorrect,main)
+import Set1.C1
+import Set1.C3
+import Set1.C5 hiding ( main )
 
 hammingDistance :: [Byte] -> [Byte] -> Int
 hammingDistance b1 b2 = sum (map popCount (zipWith (xor) b1 b2))

@@ -50,9 +50,14 @@ test-suite spec
   hs-source-dirs:      test
   main-is:             Spec.hs
   other-modules:       Set1Spec
+                     , Set1.C1Spec
+                     , Set1.C2Spec
+                     , Set1.C3Spec
+                     , Set1.C5Spec
                      , Set2.C9Spec
                      , Set2.C10Spec
                      , Set2.C11Spec
+                     , Set2.C13Spec
                      , Set2.C15Spec
                      , Set2.C16Spec
   build-depends:       base
@@ -62,4 +67,5 @@ test-suite spec
                      , hspec-contrib
                      , HUnit
                      , QuickCheck
+                     , split
   default-language:    Haskell2010

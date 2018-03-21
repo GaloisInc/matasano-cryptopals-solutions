@@ -6,10 +6,7 @@ import Data.Char
 import Data.List (sortOn)
 import Data.Word (Word8)
 
-import Set1.C1 hiding (isCorrect)
-
-ciphertext :: [Char]
-ciphertext = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+import Set1.C1
 
 candidates :: [Byte] -> [(Word8,String)]
 candidates cipherBytes = do
@@ -21,11 +18,6 @@ candidates cipherBytes = do
 
 rankedCandidates :: [Byte] -> [(Word8,String)]
 rankedCandidates input = sortOn (score . snd) (candidates input)
-
-ranked = rankedCandidates (decodeHex ciphertext)
-
-isCorrect :: Bool
-isCorrect = snd (head ranked) == "Cooking MC's like a pound of bacon"
 
 score :: String -> Double
 score = sum . map f

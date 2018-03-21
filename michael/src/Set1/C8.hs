@@ -4,7 +4,7 @@ import Control.Monad
 import Data.List.Split (chunksOf)
 import qualified Data.Set as S
 
-import Set1.C1 hiding ( isCorrect )
+import Set1.C1
 
 checkRepeat :: Ord a => [a] -> (Bool,[[a]],[[a]])
 checkRepeat bs = ( origLen /= dedupLen
