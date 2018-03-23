@@ -1,16 +1,16 @@
 module Set3.C17 where
 
+import Data.Bits (xor)
 import Data.List.Split ( chunksOf )
 import System.Random
 
 import Set1 ( Byte, unasciify )
+import Set2.Helpers ( xor' )
 import Set2.C9  ( pkcs_7Pad )
 import Set2.C10 ( myCBCEncrypt, myCBCDecryptPadded )
 import Set2.C15 ( pkcs_7Unpad_safe )
 import Util.MonadRandom
 
-
-import Debug.Trace
 
 stuffGo seed = flip evalRand (mkStdGen seed) $ do
   str <- randomElem possibleStrings
@@ -18,28 +18,37 @@ stuffGo seed = flip evalRand (mkStdGen seed) $ do
   iv  <- replicateM 16 getRandom
   let enc = myCBCEncrypt iv key
       dec = myCBCDecryptPadded iv key
-      paddedBytes = pkcs_7Pad 16 (unasciify str)
       oracle ciphertext =
         case pkcs_7Unpad_safe (dec ciphertext) of
           Nothing -> False
           Just _  -> True
-  return (enc paddedBytes, oracle, str)
+  return (enc (unasciify str), oracle, str, iv)
 
-paddingOracleAttack :: [Byte] -> ([Byte] -> Bool) -> String
-paddingOracleAttack ciphertext oracle =
-  trace (show (go [] 0)) "fishes"
+paddingOracleAttack :: [Byte] -> [Byte] -> ([Byte] -> Bool) -> [Byte]
+paddingOracleAttack iv ciphertext oracle = concat allBlocks
   where
     ctChunks = chunksOf 16 ciphertext
-    numCTChunks = length ctChunks
-    ultimateCT = ctChunks !! (numCTChunks - 1)
-    penultimateCT = ctChunks !! (numCTChunks - 2)
-    --
-    go :: [Byte] -> Byte -> [Byte]
-    go acc v
-      | length acc == 1 = acc
-      | otherwise = if oracle (replicate (16 - length acc - 1) 0 ++ [v] ++ acc ++ ultimateCT)
-                       then go (acc ++ [v]) 0
-                       else go acc (v+1)
+
+    allBlocks :: [[Byte]]
+    allBlocks = zipWith divineBlock (iv:ctChunks) ctChunks
+
+    divineBlock :: [Byte] -> [Byte] -> [Byte]
+    divineBlock ct0 ct1 = go [] 0
+      where
+      --
+      go :: [Byte] -> Byte -> [Byte]
+      go acc v
+        | length acc == 16 = acc
+        | otherwise = if oracle (replicate (16 - length acc - 1) 0 ++ [v] ++ xorAcc ++ ct1)
+                         then let penByte = ct0 !! (16 - length acc - 1)
+                                  paddingValue = fromIntegral (1 + length acc)
+                                  divinedByte = v `xor` penByte `xor` paddingValue
+                               in go (divinedByte : acc) 0
+                         else go acc (v+1)
+        where
+          lenAcc = length acc
+          paddingValue = 1 + fromIntegral lenAcc
+          xorAcc = acc `xor'` (replicate lenAcc paddingValue) `xor'` (drop (16 - lenAcc) ct0)
 
 
 possibleStrings :: [String]
