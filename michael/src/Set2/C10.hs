@@ -13,6 +13,7 @@ aes128BlockLen :: Int
 aes128BlockLen = 16
 
 myCBCEncrypt :: [Byte] -> [Byte] -> [Byte] -> [Byte]
+myCBCEncrypt _  _   []        = []
 myCBCEncrypt iv key plaintext = concat cipherChunks
   where
   blockLen = if length iv /= length key
@@ -25,7 +26,11 @@ myCBCEncrypt iv key plaintext = concat cipherChunks
   cipherChunks = tail (scanl cbcBlock iv chunks)
 
 myCBCDecrypt :: [Byte] -> [Byte] -> [Byte] -> [Byte]
-myCBCDecrypt iv key ciphertext = pkcs_7Unpad paddedPlaintext
+myCBCDecrypt iv key = pkcs_7Unpad . myCBCDecryptPadded iv key
+
+myCBCDecryptPadded :: [Byte] -> [Byte] -> [Byte] -> [Byte]
+myCBCDecryptPadded _  _   []         = []
+myCBCDecryptPadded iv key ciphertext = paddedPlaintext
   where
   blockLen = if length iv /= length key
                 then error "key/iv length mismatch"
