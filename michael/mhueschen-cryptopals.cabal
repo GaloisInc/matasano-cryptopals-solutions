@@ -84,3 +84,4 @@ executable bmp-ctr-mode-fun
                      , bytestring
                      , bmp
                      , random
+  default-language:    Haskell2010
