@@ -32,6 +32,7 @@ library
                      , Set3.C17
                      , Set3.C18
                      , Set3.C19
+                     , Set3.C20
 
                      , Util.MonadRandom
 
@@ -68,6 +69,7 @@ test-suite spec
                      , Set3.C17Spec
                      , Set3.C18Spec
                      , Set3.C19Spec
+                     , Set3.C20Spec
   build-depends:       base
                      , mhueschen-cryptopals
                      , hspec
