@@ -33,6 +33,7 @@ library
                      , Set3.C18
                      , Set3.C19
                      , Set3.C20
+                     , Set3.C21
 
                      , Util.MonadRandom
 
@@ -48,6 +49,7 @@ library
                      , random
                      , mtl
                      , MonadRandom
+                     , vector
   hs-source-dirs:      src
   default-language:    Haskell2010
 
@@ -70,6 +72,7 @@ test-suite spec
                      , Set3.C18Spec
                      , Set3.C19Spec
                      , Set3.C20Spec
+                     , Set3.C21Spec
   build-depends:       base
                      , mhueschen-cryptopals
                      , hspec
