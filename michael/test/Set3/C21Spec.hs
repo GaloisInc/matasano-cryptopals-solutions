@@ -1,7 +1,6 @@
 module Set3.C21Spec where
 
 
-import System.Random.Mersenne
 import Test.Hspec
 import Test.QuickCheck as QC
 
