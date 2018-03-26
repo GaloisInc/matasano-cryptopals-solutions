@@ -1,6 +1,10 @@
 module Set3.C21
   ( mersenneTwister
   , Word32(..)
+  , temper
+  , untemper
+  , t0, t1, t2, t3
+  , u0, u1, u2, u3
   ) where
 
 
@@ -125,10 +129,63 @@ setupState seed = V.fromList (take n (genState seed 1))
        in xPrev : (genState xI (i+1))
 
 temper :: Word32 -> Word32
-temper x = let y0 =  x `xor`  ((x `shift` (-u)) .&. d)
-               y1 = y0 `xor` ((y0 `shift`    s) .&. b)
-               y2 = y1 `xor` ((y1 `shift`    t) .&. c)
-            in      y2 `xor`  (y2 `shift` (-l))
+temper = t3 . t2 . t1 . t0
+
+t0 :: Word32 -> Word32
+t0 v = v `xor` ((v `shift` (-u)) .&. d)
+--
+t1 :: Word32 -> Word32
+t1 v = v `xor` ((v `shift`    s) .&. b)
+--
+t2 :: Word32 -> Word32
+t2 v = v `xor` ((v `shift`    t) .&. c)
+--
+t3 :: Word32 -> Word32
+t3 v = v `xor`  (v `shift` (-l))
+
+untemper :: Word32 -> Word32
+untemper = u0 . u1 . u2 . u3
+
+
+--------------------------------------------------------------------------------
+-- the rationale behind the numbers of shifts:
+-- given that we shifted something right by `k` bits and XORed it
+-- with itself:
+-- at the start, we know that the first `k` bits are correct, since
+-- they were XORed with all 0s (logical shift). the second group of
+-- `k` bits depend on the first `k` bits, and we get those after 1
+-- shift. the 3rd `k` bits depend on the 2nd, so we get those after 2
+-- shifts. hence the rationale that we do n rounds where
+-- `k * (1+n) > 32`.
+--
+-- see PrzemekM's comment on https://adriftwith.me/coding/2010/08/13/reversing-the-mersenne-twister-rng-temper-function/
+--------------------------------------------------------------------------------
+
+
+-- u = 11
+u0 :: Word32 -> Word32
+u0 v = f . f $ v
+-- iterate 2x since 11*(1+1) < 32 < 11*(1+2)
+  where
+    f x = v `xor` ((x `shift` (-u)) .&. d)
+--
+-- s = 7
+u1 :: Word32 -> Word32
+u1 v = f . f . f . f $ v
+-- iterate 4x times since 7*(1+3) < 32 < 7*(1+4)
+  where
+    f x = v `xor` ((x `shift` s) .&. b)
+--
+-- t = 15
+u2 :: Word32 -> Word32
+u2 v = f . f $ v
+-- iterate 2x since 15*(1+1) < 32 < 15*(1+2)
+  where
+    f x = v `xor` ((x `shift` t) .&. c)
+--
+u3 :: Word32 -> Word32
+u3 = t3
+-- iterate 1x since 18*(1+0) < 32 < 18*(1+1)
 
 mulA :: Word32 -> Word32
 mulA x = case testBit x 0 of
