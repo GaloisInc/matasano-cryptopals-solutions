@@ -11,10 +11,10 @@ import Set3.C21
 checkBruteForceWords :: IO ()
 checkBruteForceWords = do
   (seed,firstOut) <- firstValueFromTimestampSeed
-  putStrLn "first output: " ++ show firstOut
+  putStrLn $ "first output: " ++ show firstOut
   seed' <- bruteForceRecoverTimestampSeed firstOut
-  putStrLn "recovered seed: " ++ show seed'
-  putStrLn "original seed:  " ++ show seed
+  putStrLn $ "recovered seed: " ++ show seed'
+  putStrLn $ "original seed:  " ++ show seed
 
 firstValueFromTimestampSeed :: IO (Word32, Word32)
 firstValueFromTimestampSeed = do
