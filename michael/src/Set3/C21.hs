@@ -1,5 +1,6 @@
 module Set3.C21
   ( mersenneTwister
+  , mersenneTwisterFromState
   , Word32(..)
   , temper
   , untemper
@@ -68,6 +69,13 @@ mersenneTwister :: Word32 -> [Word32]
 mersenneTwister seed = SL.runST (runIt st0)
   where
     st0 = setupState seed
+
+mersenneTwisterFromState :: [Word32] -> [Word32]
+mersenneTwisterFromState state = SL.runST (runIt st0)
+  where
+    st0 = if length state /= 624
+             then error "state must be length 624"
+             else V.fromList state
 
 ----
 -- constants
